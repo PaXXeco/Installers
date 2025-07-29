@@ -1,4 +1,4 @@
-; By PHMP
+; By PHMP 
 
 #define MyAppName "Notificador Ahead - Installer"
 #define MyAppVersion "1.0.0"
@@ -61,9 +61,14 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 // 1 Variáveis globais
 var
   UserPage: TInputQueryWizardPage;
+  AdvancedConfigPage: TInputQueryWizardPage;
   CustomUserName: String;
   ConfigPage: TOutputProgressWizardPage;
   CancelConfig: Boolean;
+
+  // Configurações Avançadas
+  DBName, DBProvider, CustomDataSource, CustomPort, CustomBase, CustomUserId, CustomPassword: String;
+  TempoIniciarExecucao, LinkWeb, ClientSettingsProvider: String;
 
 // 2 Funções utilitárias
 function IsAdminInstallMode: Boolean;
@@ -90,14 +95,46 @@ end;
 // 3 Inicialização do assistente
 procedure InitializeWizard;
 begin
+  // Página para usuário
   UserPage := CreateInputQueryPage(wpSelectDir,
     'Configuração de Usuário',
     'Defina o usuário',
     'Se a instalação for para todos os usuários, informe o nome do usuário. ' +
     'Se for apenas para você, o nome padrão será usado, mas pode ser alterado.');
-
   UserPage.Add('Nome do usuário:', False);
   UserPage.Values[0] := ExpandConstant('{username}');
+
+  // Página de configurações avançadas
+  AdvancedConfigPage := CreateInputQueryPage(UserPage.ID,
+    'Configurações Avançadas',
+    'Configurações opcionais de conexão e aplicativo',
+    'Se preferir, altere as configurações abaixo. Caso contrário, os valores padrão serão aplicados.');
+
+  // Configurações de banco
+  AdvancedConfigPage.Add('Nome da conexão (DBName):', False);
+  AdvancedConfigPage.Add('Provider (DBProvider):', False);
+  AdvancedConfigPage.Add('Data Source:', False);
+  AdvancedConfigPage.Add('Porta:', False);
+  AdvancedConfigPage.Add('Base:', False);
+  AdvancedConfigPage.Add('User Id:', False);
+  AdvancedConfigPage.Add('Password:', True);
+
+  // Configurações do aplicativo
+  AdvancedConfigPage.Add('Tempo para iniciar (hh:mm:ss):', False);
+  AdvancedConfigPage.Add('Link Web:', False);
+  AdvancedConfigPage.Add('ClientSettingsProvider:', False);
+
+  // Valores padrão
+  AdvancedConfigPage.Values[0] := 'GoAheadBD';
+  AdvancedConfigPage.Values[1] := 'Oracle.DataAccess.Client';
+  AdvancedConfigPage.Values[2] := '192.168.0.124';
+  AdvancedConfigPage.Values[3] := '1522';
+  AdvancedConfigPage.Values[4] := 'prod.ou.local';
+  AdvancedConfigPage.Values[5] := 'AHEAD';
+  AdvancedConfigPage.Values[6] := 'AHEAD';
+  AdvancedConfigPage.Values[7] := '00:01:00';
+  AdvancedConfigPage.Values[8] := 'www.google.com.br';
+  AdvancedConfigPage.Values[9] := '';
 
   // Inicializa página de progresso
   ConfigPage := CreateOutputProgressPage('Atualizando variáveis do arquivo de configuração', 'Aguarde enquanto as alterações são aplicadas.');
@@ -108,6 +145,7 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
+
   if CurPageID = UserPage.ID then
   begin
     if Trim(UserPage.Values[0]) = '' then
@@ -117,6 +155,20 @@ begin
     end
     else
       CustomUserName := UserPage.Values[0];
+  end;
+
+  if CurPageID = AdvancedConfigPage.ID then
+  begin
+    DBName := AdvancedConfigPage.Values[0];
+    DBProvider := AdvancedConfigPage.Values[1];
+    CustomDataSource := AdvancedConfigPage.Values[2];
+    CustomPort := AdvancedConfigPage.Values[3];
+    CustomBase := AdvancedConfigPage.Values[4];
+    CustomUserId := AdvancedConfigPage.Values[5];
+    CustomPassword := AdvancedConfigPage.Values[6];
+    TempoIniciarExecucao := AdvancedConfigPage.Values[7];
+    LinkWeb := AdvancedConfigPage.Values[8];
+    ClientSettingsProvider := AdvancedConfigPage.Values[9];
   end;
 end;
 
@@ -160,16 +212,38 @@ begin
 
       Sleep(20);
       ConfigPage.SetProgress(I, 100);
-      ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%');
+      ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', '');
 
       if I = 10 then
       begin
-        StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value="', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '"', True);
+        StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=',
+          '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True);
+      end;
+
+      if I = 30 then
+      begin
+        StringChangeEx(ConfigText, '<add name="GoAheadBD" providerName="Oracle.DataAccess.Client" connectionString="',
+          '<add name="' + DBName + '" providerName="' + DBProvider +
+          '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort +
+          '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';"', True);
       end;
 
       if I = 50 then
       begin
-        StringChangeEx(ConfigText, '<add key="Usuario" value="', '<add key="Usuario" value="' + CustomUserName + '"', True);
+        StringChangeEx(ConfigText, '<add key="Usuario" value=',
+          '<add key="Usuario" value="' + CustomUserName + '" />', True);
+      end;
+
+      if I = 70 then
+      begin
+        StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=',
+          '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True);
+
+        StringChangeEx(ConfigText, '<add key="LinkWeb" value="',
+          '<add key="LinkWeb" value="' + LinkWeb + '" />', True);
+
+        StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value="',
+          '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True);
       end;
     end;
 
