@@ -59,38 +59,47 @@ Name: "{userdesktop}\Notificador Ahead"; Filename: "{app}\{#MyAppExeName}"
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-function GetInstallDir(Default: String): String; 
-begin 
-  if IsAdminInstallMode then 
-    Result := ExpandConstant('{autopf}\Ahead\Notificador') 
-  else 
-    Result := ExpandConstant('{localappdata}\Ahead\Notificador'); 
-end; 
-
-function GetProgramsFolder(Default: String): String; 
-begin 
-  if IsAdminInstallMode then 
-    Result := ExpandConstant('{autoprograms}') 
-  else 
-    Result := ExpandConstant('{userprograms}'); 
-end; 
-
+// 1 Variáveis globais
 var
   UserPage: TInputQueryWizardPage;
   CustomUserName: String;
 
+// 2 Funções utilitárias
 function IsAdminInstallMode: Boolean;
 begin
   Result := IsAdminLoggedOn;
 end;
 
+function GetInstallDir(Default: String): String;
+begin
+  if IsAdminInstallMode then
+    Result := ExpandConstant('{autopf}\Ahead\Notificador')
+  else
+    Result := ExpandConstant('{localappdata}\Ahead\Notificador');
+end;
+
+function GetProgramsFolder(Default: String): String;
+begin
+  if IsAdminInstallMode then
+    Result := ExpandConstant('{autoprograms}')
+  else
+    Result := ExpandConstant('{userprograms}');
+end;
+
+// 3 Inicialização do assistente
 procedure InitializeWizard;
 begin
-  UserPage := CreateInputQueryPage(wpSelectDir,'Configuração de Usuário','Defina o usuário responsável pelos logs','Se a instalação for para todos os usuários, informe o nome do usuário. ' + 'Se for apenas para você, o nome padrão será usado, mas pode ser alterado.');
+  UserPage := CreateInputQueryPage(wpSelectDir,
+    'Configuração de Usuário',
+    'Defina o usuário responsável pelos logs',
+    'Se a instalação for para todos os usuários, informe o nome do usuário. ' +
+    'Se for apenas para você, o nome padrão será usado, mas pode ser alterado.');
+
   UserPage.Add('Nome do usuário:', False);
   UserPage.Values[0] := ExpandConstant('{username}');
 end;
 
+// 4 Validação da página
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
@@ -106,6 +115,7 @@ begin
   end;
 end;
 
+// 5 Modificações pós-instalação
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ConfigFile, LogPath, ConfigText: String;
@@ -127,8 +137,15 @@ begin
       ConfigContent.LoadFromFile(ConfigFile);
       ConfigText := ConfigContent.Text;
 
-      StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value="', '<add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '"', True);
-      StringChange(ConfigText, '<add key="Usuario" value="', '<add key="Usuario" value="' + CustomUserName + '"', True);
+      StringChangeEx(ConfigText,
+        '<add key="LogDeErroCaminhoDoArquivo" value="',
+        '<add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '"',
+        True);
+
+      StringChangeEx(ConfigText,
+        '<add key="Usuario" value="',
+        '<add key="Usuario" value="' + CustomUserName + '"',
+        True);
 
       ConfigContent.Text := ConfigText;
       ConfigContent.SaveToFile(ConfigFile);
