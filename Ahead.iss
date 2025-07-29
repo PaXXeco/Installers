@@ -66,7 +66,7 @@ begin
   else 
     Result := ExpandConstant('{localappdata}\Ahead\Notificador'); 
 end; 
-  
+
 function GetProgramsFolder(Default: String): String; 
 begin 
   if IsAdminInstallMode then 
@@ -87,16 +87,13 @@ end;
 procedure InitializeWizard;
 begin
   UserPage := CreateInputQueryPage(wpSelectDir,'Configuração de Usuário','Defina o usuário responsável pelos logs','Se a instalação for para todos os usuários, informe o nome do usuário. ' + 'Se for apenas para você, o nome padrão será usado, mas pode ser alterado.');
-
   UserPage.Add('Nome do usuário:', False);
-
   UserPage.Values[0] := ExpandConstant('{username}');
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-
   if CurPageID = UserPage.ID then
   begin
     if Trim(UserPage.Values[0]) = '' then
@@ -131,7 +128,6 @@ begin
       ConfigText := ConfigContent.Text;
 
       StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value="', '<add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '"', True);
-
       StringChange(ConfigText, '<add key="Usuario" value="', '<add key="Usuario" value="' + CustomUserName + '"', True);
 
       ConfigContent.Text := ConfigText;
