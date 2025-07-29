@@ -1,6 +1,7 @@
-; By PHMP
+; By PHMP 
+
 #define MyAppName "Notificador Ahead Installer"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.0.0"
 #define MyAppPublisher "Notificador Ahead, Installer By PHMP"
 #define MyAppURL "https://github.com/PaXXeco"
 #define MyAppExeName "NotificadorAhead.exe"
@@ -20,11 +21,12 @@ ArchitecturesInstallIn64BitMode=x64
 DefaultDirName={code:GetInstallDir}
 DefaultGroupName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
-OutputBaseFilename=ByPHMP
+OutputBaseFilename=NotificadorAheadInstallerByPHMP
 SetupIconFile=C:\Users\pedro.pacheco\Desktop\Ahead\notificador\ahead.ico
 SolidCompression=yes
 ChangesAssociations=yes
 WizardStyle=modern
+PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 AllowNoIcons=yes
 
@@ -44,10 +46,13 @@ Source: "C:\Users\pedro.pacheco\Desktop\Ahead\notificador\Persistencia.dll"; Des
 Source: "C:\Users\pedro.pacheco\Desktop\Ahead\notificador\Persistencia.Sessao.dll"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
+; Associação de arquivos híbrida (funciona para admin ou usuário normal)
 Root: HKA; Subkey: "Software\Classes\{#MyAppAssocExt}\OpenWithProgids"; ValueType: string; ValueName: "{#MyAppAssocKey}"; ValueData: ""; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}"; ValueType: string; ValueName: ""; ValueData: "{#MyAppAssocName}"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
 Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+
+; Inicialização automática dependendo do modo
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "AheadNotificador"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Check: not IsAdminInstallMode
 Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "AheadNotificador"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Check: IsAdminInstallMode
 
@@ -91,7 +96,7 @@ procedure InitializeWizard;
 begin
   UserPage := CreateInputQueryPage(wpSelectDir,
     'Configuração de Usuário',
-    'Defina o usuário responsável pelos logs',
+    'Defina o usuário',
     'Se a instalação for para todos os usuários, informe o nome do usuário. ' +
     'Se for apenas para você, o nome padrão será usado, mas pode ser alterado.');
 
@@ -137,15 +142,8 @@ begin
       ConfigContent.LoadFromFile(ConfigFile);
       ConfigText := ConfigContent.Text;
 
-      StringChangeEx(ConfigText,
-        '<add key="LogDeErroCaminhoDoArquivo" value="',
-        '<add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '"',
-        True);
-
-      StringChangeEx(ConfigText,
-        '<add key="Usuario" value="',
-        '<add key="Usuario" value="' + CustomUserName + '"',
-        True);
+      StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '"', True);
+      StringChangeEx(ConfigText, '<add key="Usuario" value=', '<add key="Usuario" value="' + CustomUserName + '"', True);
 
       ConfigContent.Text := ConfigText;
       ConfigContent.SaveToFile(ConfigFile);
