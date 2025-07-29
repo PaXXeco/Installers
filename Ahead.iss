@@ -59,6 +59,22 @@ Name: "{userdesktop}\Notificador Ahead"; Filename: "{app}\{#MyAppExeName}"
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
+function GetInstallDir(Default: String): String; 
+begin 
+  if IsAdminInstallMode then 
+    Result := ExpandConstant('{autopf}\Ahead\Notificador') 
+  else 
+    Result := ExpandConstant('{localappdata}\Ahead\Notificador'); 
+end; 
+  
+function GetProgramsFolder(Default: String): String; 
+begin 
+  if IsAdminInstallMode then 
+    Result := ExpandConstant('{autoprograms}') 
+  else 
+    Result := ExpandConstant('{userprograms}'); 
+end; 
+
 var
   UserPage: TInputQueryWizardPage;
   CustomUserName: String;
@@ -114,13 +130,9 @@ begin
       ConfigContent.LoadFromFile(ConfigFile);
       ConfigText := ConfigContent.Text;
 
-      ConfigText := StringChange(ConfigText,
-        '<add key="LogDeErroCaminhoDoArquivo" value="',
-        '<add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '"');
+      StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value="', '<add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '"', True);
 
-      ConfigText := StringChange(ConfigText,
-        '<add key="Usuario" value="',
-        '<add key="Usuario" value="' + CustomUserName + '"');
+      StringChange(ConfigText, '<add key="Usuario" value="', '<add key="Usuario" value="' + CustomUserName + '"', True);
 
       ConfigContent.Text := ConfigText;
       ConfigContent.SaveToFile(ConfigFile);
@@ -129,4 +141,3 @@ begin
     end;
   end;
 end;
-
