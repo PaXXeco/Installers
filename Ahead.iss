@@ -61,6 +61,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [Code]
 var
   CustomUserName: String;
+  UserPage: TInputQueryWizardPage;
 
 function GetInstallDir(Default: String): String;
 begin
@@ -80,20 +81,31 @@ end;
 
 procedure InitializeWizard;
 begin
+  UserPage := CreateInputQueryPage(wpSelectDir,
+    'Configuração de Usuário',
+    'Informe as opções de log',
+    'Preencha os dados abaixo:');
+
+  UserPage.Add('Nome do usuário para os logs:', False);
+
   if IsAdminInstallMode then
-  begin
-    if not InputQuery('Configuração de Usuário',
-      'Digite o nome do usuário para os logs:', False, CustomUserName) then
-    begin
-      MsgBox('É necessário informar um nome de usuário para continuar!', mbError, MB_OK);
-      Abort;
-    end;
-  end
+    UserPage.Values[0] := ''
   else
+    UserPage.Values[0] := ExpandConstant('{username}');
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
+  if CurPageID = UserPage.ID then
   begin
-    CustomUserName := ExpandConstant('{username}');
-    InputQuery('Configuração de Usuário',
-      'Confirme ou altere o nome do usuário para os logs:', False, CustomUserName);
+    if Trim(UserPage.Values[0]) = '' then
+    begin
+      MsgBox('É necessário informar um nome de usuário!', mbError, MB_OK);
+      Result := False;
+    end
+    else
+      CustomUserName := UserPage.Values[0];
   end;
 end;
 
@@ -101,53 +113,33 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   ConfigFile, LogPath: String;
   ConfigContent: TStringList;
-  i: Integer;
-  FoundLogKey, FoundUserKey: Boolean;
 begin
   if CurStep = ssPostInstall then
   begin
     ConfigFile := ExpandConstant('{app}\NotificadorAhead.exe.config');
 
-    if FileExists(ConfigFile) then
-    begin
-      ConfigContent := TStringList.Create;
-      try
-        ConfigContent.LoadFromFile(ConfigFile);
+    if IsAdminInstallMode then
+      LogPath := ExpandConstant('{commonappdata}\Ahead\Notificador\logs')
+    else
+      LogPath := ExpandConstant('{localappdata}\Ahead\Notificador\logs');
 
-        if IsAdminInstallMode then
-          LogPath := 'C:\ProgramData\Ahead\Notificador\logs'
-        else
-          LogPath := ExpandConstant('{localappdata}\Ahead\Notificador\logs');
+    ForceDirectories(LogPath);
 
-        ForceDirectories(LogPath);
+    ConfigContent := TStringList.Create;
+    try
+      ConfigContent.LoadFromFile(ConfigFile);
 
-        FoundLogKey := False;
-        FoundUserKey := False;
+      ConfigContent.Text := StringChangeEx(ConfigContent.Text,
+        '<add key="LogDeErroCaminhoDoArquivo" value="', 
+        '<add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '"');
 
-        for i := 0 to ConfigContent.Count - 1 do
-        begin
-          if Pos('LogDeErroCaminhoDoArquivo', ConfigContent[i]) > 0 then
-          begin
-            ConfigContent[i] := '    <add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '" />';
-            FoundLogKey := True;
-          end
-          else if Pos('Usuario', ConfigContent[i]) > 0 then
-          begin
-            ConfigContent[i] := '    <add key="Usuario" value="' + CustomUserName + '" />';
-            FoundUserKey := True;
-          end;
-        end;
+      ConfigContent.Text := StringChangeEx(ConfigContent.Text,
+        '<add key="Usuario" value="', 
+        '<add key="Usuario" value="' + CustomUserName + '"');
 
-        if not FoundLogKey then
-          ConfigContent.Insert(ConfigContent.Count - 1, '    <add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '" />');
-
-        if not FoundUserKey then
-          ConfigContent.Insert(ConfigContent.Count - 1, '    <add key="Usuario" value="' + CustomUserName + '" />');
-
-        ConfigContent.SaveToFile(ConfigFile);
-      finally
-        ConfigContent.Free;
-      end;
+      ConfigContent.SaveToFile(ConfigFile);
+    finally
+      ConfigContent.Free;
     end;
   end;
 end;
