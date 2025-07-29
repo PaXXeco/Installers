@@ -1,4 +1,4 @@
-; By PHMP 
+; By PHMP
 
 #define MyAppName "Notificador Ahead - Installer"
 #define MyAppVersion "1.0.0"
@@ -58,19 +58,24 @@ Name: "{userdesktop}\Notificador Ahead"; Filename: "{app}\{#MyAppExeName}"
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-// 1 Variáveis globais
+// Variáveis globais
 var
   UserPage: TInputQueryWizardPage;
-  AdvancedConfigPage: TInputQueryWizardPage;
-  CustomUserName: String;
+  EnableAdvancedCheckBox: TNewCheckBox;
+  ConnectionPage: TInputQueryWizardPage;
+  CredentialsPage: TInputQueryWizardPage;
+  AppConfigPage: TInputQueryWizardPage;
   ConfigPage: TOutputProgressWizardPage;
   CancelConfig: Boolean;
 
   // Configurações Avançadas
-  DBName, DBProvider, CustomDataSource, CustomPort, CustomBase, CustomUserId, CustomPassword: String;
+  DBName, DBProvider, CustomDataSource, CustomPort, CustomBase: String;
+  CustomUserId, CustomPassword: String;
   TempoIniciarExecucao, LinkWeb, ClientSettingsProvider: String;
+  CustomUserName: String;
+  EnableAdvanced: Boolean;
 
-// 2 Funções utilitárias
+// Funções utilitárias
 function IsAdminInstallMode: Boolean;
 begin
   Result := IsAdmin;
@@ -92,56 +97,78 @@ begin
     Result := ExpandConstant('{userprograms}');
 end;
 
-// 3 Inicialização do assistente
+// Inicialização do assistente
 procedure InitializeWizard;
 begin
-  // Página para usuário
+  // Página de usuário
   UserPage := CreateInputQueryPage(wpSelectDir,
     'Configuração de Usuário',
     'Defina o usuário',
-    'Se a instalação for para todos os usuários, informe o nome do usuário. ' +
-    'Se for apenas para você, o nome padrão será usado, mas pode ser alterado.');
+    'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.');
   UserPage.Add('Nome do usuário:', False);
   UserPage.Values[0] := ExpandConstant('{username}');
 
-  // Página de configurações avançadas
-  AdvancedConfigPage := CreateInputQueryPage(UserPage.ID,
-    'Configurações Avançadas',
-    'Configurações opcionais de conexão e aplicativo',
-    'Se preferir, altere as configurações abaixo. Caso contrário, os valores padrão serão aplicados.');
+  EnableAdvancedCheckBox := TNewCheckBox.Create(WizardForm);
+  EnableAdvancedCheckBox.Parent := UserPage.Surface;
+  EnableAdvancedCheckBox.Caption := 'Habilitar configurações avançadas';
+  EnableAdvancedCheckBox.Top := UserPage.Edits[0].Top + 30;
+  EnableAdvancedCheckBox.Left := UserPage.Edits[0].Left;
+  EnableAdvancedCheckBox.Checked := False;
 
-  // Configurações de banco
-  AdvancedConfigPage.Add('Nome da conexão (DBName):', False);
-  AdvancedConfigPage.Add('Provider (DBProvider):', False);
-  AdvancedConfigPage.Add('Data Source:', False);
-  AdvancedConfigPage.Add('Porta:', False);
-  AdvancedConfigPage.Add('Base:', False);
-  AdvancedConfigPage.Add('User Id:', False);
-  AdvancedConfigPage.Add('Password:', True);
+  // Página de Configurações de Conexão
+  ConnectionPage := CreateInputQueryPage(UserPage.ID,
+    'Configurações de Conexão',
+    'Conexão com o banco de dados',
+    'Altere os parâmetros de conexão se necessário.');
+  ConnectionPage.Add('Nome da conexão (DBName):', False);
+  ConnectionPage.Add('Provider (DBProvider):', False);
+  ConnectionPage.Add('Data Source:', False);
+  ConnectionPage.Add('Porta:', False);
+  ConnectionPage.Add('Base:', False);
 
-  // Configurações do aplicativo
-  AdvancedConfigPage.Add('Tempo para iniciar (hh:mm:ss):', False);
-  AdvancedConfigPage.Add('Link Web:', False);
-  AdvancedConfigPage.Add('ClientSettingsProvider:', False);
+  ConnectionPage.Values[0] := 'GoAheadBD';
+  ConnectionPage.Values[1] := 'Oracle.DataAccess.Client';
+  ConnectionPage.Values[2] := '192.168.0.124';
+  ConnectionPage.Values[3] := '1522';
+  ConnectionPage.Values[4] := 'prod.ou.local';
 
-  // Valores padrão
-  AdvancedConfigPage.Values[0] := 'GoAheadBD';
-  AdvancedConfigPage.Values[1] := 'Oracle.DataAccess.Client';
-  AdvancedConfigPage.Values[2] := '192.168.0.124';
-  AdvancedConfigPage.Values[3] := '1522';
-  AdvancedConfigPage.Values[4] := 'prod.ou.local';
-  AdvancedConfigPage.Values[5] := 'AHEAD';
-  AdvancedConfigPage.Values[6] := 'AHEAD';
-  AdvancedConfigPage.Values[7] := '00:01:00';
-  AdvancedConfigPage.Values[8] := 'www.google.com.br';
-  AdvancedConfigPage.Values[9] := '';
+  // Página de Credenciais
+  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID,
+    'Credenciais',
+    'Acesso ao banco de dados',
+    'Informe o usuário e senha do banco de dados.');
+  CredentialsPage.Add('User Id:', False);
+  CredentialsPage.Add('Password:', True);
+  CredentialsPage.Values[0] := 'AHEAD';
+  CredentialsPage.Values[1] := 'AHEAD';
 
-  // Inicializa página de progresso
+  // Página de Configurações do Aplicativo
+  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID,
+    'Configurações do Aplicativo',
+    'Configurações adicionais',
+    'Altere parâmetros do aplicativo, se necessário.');
+  AppConfigPage.Add('Tempo para iniciar (hh:mm:ss):', False);
+  AppConfigPage.Add('Link Web:', False);
+  AppConfigPage.Add('ClientSettingsProvider:', False);
+  AppConfigPage.Values[0] := '00:01:00';
+  AppConfigPage.Values[1] := 'www.google.com.br';
+  AppConfigPage.Values[2] := '';
+
+  // Página de progresso
   ConfigPage := CreateOutputProgressPage('Atualizando variáveis do arquivo de configuração', 'Aguarde enquanto as alterações são aplicadas.');
   CancelConfig := False;
 end;
 
-// 4 Validação da página
+// Controle de exibição das páginas
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  if (PageID = ConnectionPage.ID) or (PageID = CredentialsPage.ID) or (PageID = AppConfigPage.ID) then
+    Result := not EnableAdvanced
+  else
+    Result := False;
+end;
+
+// Validação dos dados
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
@@ -150,29 +177,32 @@ begin
   begin
     if Trim(UserPage.Values[0]) = '' then
     begin
-      MsgBox('É necessário informar um nome de usuário para continuar!', mbError, MB_OK);
+      MsgBox('É necessário informar um nome de usuário!', mbError, MB_OK);
       Result := False;
     end
     else
+    begin
       CustomUserName := UserPage.Values[0];
+      EnableAdvanced := EnableAdvancedCheckBox.Checked;
+    end;
   end;
 
-  if CurPageID = AdvancedConfigPage.ID then
+  if CurPageID = AppConfigPage.ID then
   begin
-    DBName := AdvancedConfigPage.Values[0];
-    DBProvider := AdvancedConfigPage.Values[1];
-    CustomDataSource := AdvancedConfigPage.Values[2];
-    CustomPort := AdvancedConfigPage.Values[3];
-    CustomBase := AdvancedConfigPage.Values[4];
-    CustomUserId := AdvancedConfigPage.Values[5];
-    CustomPassword := AdvancedConfigPage.Values[6];
-    TempoIniciarExecucao := AdvancedConfigPage.Values[7];
-    LinkWeb := AdvancedConfigPage.Values[8];
-    ClientSettingsProvider := AdvancedConfigPage.Values[9];
+    DBName := ConnectionPage.Values[0];
+    DBProvider := ConnectionPage.Values[1];
+    CustomDataSource := ConnectionPage.Values[2];
+    CustomPort := ConnectionPage.Values[3];
+    CustomBase := ConnectionPage.Values[4];
+    CustomUserId := CredentialsPage.Values[0];
+    CustomPassword := CredentialsPage.Values[1];
+    TempoIniciarExecucao := AppConfigPage.Values[0];
+    LinkWeb := AppConfigPage.Values[1];
+    ClientSettingsProvider := AppConfigPage.Values[2];
   end;
 end;
 
-// 5 Cancelamento
+// Cancelamento
 procedure CancelButtonClick(CurPageID: Integer; var Cancel, Confirm: Boolean);
 begin
   if CurPageID = ConfigPage.ID then
@@ -182,7 +212,7 @@ begin
   end;
 end;
 
-// 6 Modificações pós-instalação
+// Aplicação das alterações
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ConfigFile, ConfigText: String;
@@ -204,7 +234,7 @@ begin
     begin
       if CancelConfig then
       begin
-        MsgBox('Configuração cancelada pelo usuário.', mbError, MB_OK);
+        MsgBox('Configuração cancelada.', mbError, MB_OK);
         ConfigContent.Free;
         ConfigPage.Hide;
         Exit;
@@ -215,24 +245,18 @@ begin
       ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', '');
 
       if I = 10 then
-      begin
-        StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=',
+        StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', 
           '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True);
-      end;
 
       if I = 30 then
-      begin
         StringChangeEx(ConfigText, '<add name="GoAheadBD" providerName="Oracle.DataAccess.Client" connectionString="',
           '<add name="' + DBName + '" providerName="' + DBProvider +
           '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort +
           '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';"', True);
-      end;
 
       if I = 50 then
-      begin
-        StringChangeEx(ConfigText, '<add key="Usuario" value=',
+        StringChangeEx(ConfigText, '<add key="Usuario" value=', 
           '<add key="Usuario" value="' + CustomUserName + '" />', True);
-      end;
 
       if I = 70 then
       begin
@@ -252,6 +276,6 @@ begin
     ConfigContent.Free;
 
     ConfigPage.Hide;
-    MsgBox('Configuração concluída.', mbInformation, MB_OK);
+    MsgBox('Configuração concluída!', mbInformation, MB_OK);
   end;
 end;
