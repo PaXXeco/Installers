@@ -188,6 +188,7 @@ begin
   end;
 
   if CurPageID = AppConfigPage.ID then
+  if EnableAdvanced then
   begin
     DBName := ConnectionPage.Values[0];
     DBProvider := ConnectionPage.Values[1];
@@ -199,7 +200,22 @@ begin
     TempoIniciarExecucao := AppConfigPage.Values[0];
     LinkWeb := AppConfigPage.Values[1];
     ClientSettingsProvider := AppConfigPage.Values[2];
+  end
+  else
+  begin
+    // Valores padrão quando NÃO marca as opções avançadas
+    DBName := 'GoAheadBD';
+    DBProvider := 'Oracle.DataAccess.Client';
+    CustomDataSource := '192.168.0.124';
+    CustomPort := '1522';
+    CustomBase := 'prod.ou.local';
+    CustomUserId := 'AHEAD';
+    CustomPassword := 'AHEAD';
+    TempoIniciarExecucao := '00:01:00';
+    LinkWeb := 'www.google.com.br';
+    ClientSettingsProvider := '';
   end;
+
 end;
 
 // Cancelamento
