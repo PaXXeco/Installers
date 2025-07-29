@@ -60,48 +60,32 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 
 [Code]
 var
-  CustomUserName: String;
   UserPage: TInputQueryWizardPage;
+  CustomUserName: String;
 
-function GetInstallDir(Default: String): String;
+function IsAdminInstallMode: Boolean;
 begin
-  if IsAdminInstallMode then
-    Result := ExpandConstant('{autopf}\Ahead\Notificador')
-  else
-    Result := ExpandConstant('{localappdata}\Ahead\Notificador');
-end;
-
-function GetProgramsFolder(Default: String): String;
-begin
-  if IsAdminInstallMode then
-    Result := ExpandConstant('{autoprograms}')
-  else
-    Result := ExpandConstant('{userprograms}');
+  Result := IsAdminLoggedOn;
 end;
 
 procedure InitializeWizard;
 begin
-  UserPage := CreateInputQueryPage(wpSelectDir,
-    'Configuração de Usuário',
-    'Informe as opções de log',
-    'Preencha os dados abaixo:');
+  UserPage := CreateInputQueryPage(wpSelectDir,'Configuração de Usuário','Defina o usuário responsável pelos logs','Se a instalação for para todos os usuários, informe o nome do usuário. ' + 'Se for apenas para você, o nome padrão será usado, mas pode ser alterado.');
 
-  UserPage.Add('Nome do usuário para os logs:', False);
+  UserPage.Add('Nome do usuário:', False);
 
-  if IsAdminInstallMode then
-    UserPage.Values[0] := ''
-  else
-    UserPage.Values[0] := ExpandConstant('{username}');
+  UserPage.Values[0] := ExpandConstant('{username}');
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
+
   if CurPageID = UserPage.ID then
   begin
     if Trim(UserPage.Values[0]) = '' then
     begin
-      MsgBox('É necessário informar um nome de usuário!', mbError, MB_OK);
+      MsgBox('É necessário informar um nome de usuário para continuar!', mbError, MB_OK);
       Result := False;
     end
     else
@@ -111,7 +95,7 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  ConfigFile, LogPath: String;
+  ConfigFile, LogPath, ConfigText: String;
   ConfigContent: TStringList;
 begin
   if CurStep = ssPostInstall then
@@ -128,18 +112,21 @@ begin
     ConfigContent := TStringList.Create;
     try
       ConfigContent.LoadFromFile(ConfigFile);
+      ConfigText := ConfigContent.Text;
 
-      ConfigContent.Text := StringChangeEx(ConfigContent.Text,
-        '<add key="LogDeErroCaminhoDoArquivo" value="', 
+      ConfigText := StringChange(ConfigText,
+        '<add key="LogDeErroCaminhoDoArquivo" value="',
         '<add key="LogDeErroCaminhoDoArquivo" value="' + LogPath + '"');
 
-      ConfigContent.Text := StringChangeEx(ConfigContent.Text,
-        '<add key="Usuario" value="', 
+      ConfigText := StringChange(ConfigText,
+        '<add key="Usuario" value="',
         '<add key="Usuario" value="' + CustomUserName + '"');
 
+      ConfigContent.Text := ConfigText;
       ConfigContent.SaveToFile(ConfigFile);
     finally
       ConfigContent.Free;
     end;
   end;
 end;
+
