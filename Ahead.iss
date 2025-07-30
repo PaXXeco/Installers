@@ -96,7 +96,7 @@ begin
   Result := True;
 end;
 
-// Normaliza o formato hh:mm:ss (ex: 1:5:9 -> 01:05:09)
+// Normaliza o formato hh:mm:ss
 function NormalizeTimeFormat(TimeStr: String): String;
 var
   Parts: TArrayOfString;
@@ -105,25 +105,16 @@ begin
   Result := Format('%.2d:%.2d:%.2d', [StrToIntDef(Parts[0], 0), StrToIntDef(Parts[1], 0), StrToIntDef(Parts[2], 0)]);
 end;
 
-function IsAdminInstallMode: Boolean;
-begin
-  Result := IsAdmin;
-end;
-
+// Ajusta diretório de instalação sem exigir admin
 function GetInstallDir(Default: String): String;
 begin
-  if IsAdminInstallMode then
-    Result := ExpandConstant('{autopf}\Ahead\Notificador')
-  else
-    Result := ExpandConstant('{localappdata}\Ahead\Notificador');
+  Result := ExpandConstant('{localappdata}\Ahead\Notificador');
 end;
 
+// Ajusta pasta de atalhos sem exigir admin
 function GetProgramsFolder(Default: String): String;
 begin
-  if IsAdminInstallMode then
-    Result := ExpandConstant('{autoprograms}')
-  else
-    Result := ExpandConstant('{userprograms}');
+  Result := ExpandConstant('{userprograms}');
 end;
 
 // Inicialização do assistente 
@@ -352,3 +343,4 @@ begin
     MsgBox('Configuração concluída!', mbInformation, MB_OK);
   end;
 end;
+
