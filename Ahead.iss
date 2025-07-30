@@ -58,31 +58,48 @@ Name: "{userdesktop}\Notificador Ahead"; Filename: "{app}\{#MyAppExeName}"
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-// Variáveis globais 
-var 
-  UserPage: TInputQueryWizardPage; 
-  EnableAdvancedCheckBox: TNewCheckBox; 
-  ConnectionPage: TInputQueryWizardPage; 
-  CredentialsPage: TInputQueryWizardPage; 
-  AppConfigPage: TInputQueryWizardPage; 
-  ConfigPage: TOutputProgressWizardPage; 
-  CancelConfig: Boolean;
+var
+  RollbackNeeded: Boolean;
 
-  // Configurações Avançadas 
-  DBName, DBProvider, CustomDataSource, CustomPort, CustomBase: String; 
-  CustomUserId, CustomPassword: String; 
-  TempoIniciarExecucao, LinkWeb, ClientSettingsProvider: String; 
-  CustomUserName: String; 
-  EnableAdvanced: Boolean; 
+type
+  TArrayOfString = array of String;
 
-// Função para validar hh:mm:ss
+// ==========================
+// Função auxiliar Split
+// ==========================
+function Split(const S, Delimiter: String): TArrayOfString;
+var
+  P: Integer;
+  Temp: String;
+begin
+  SetArrayLength(Result, 0);
+  Temp := S;
+
+  while True do
+  begin
+    P := Pos(Delimiter, Temp);
+    if P = 0 then
+    begin
+      SetArrayLength(Result, GetArrayLength(Result) + 1);
+      Result[GetArrayLength(Result) - 1] := Temp;
+      Break;
+    end;
+    SetArrayLength(Result, GetArrayLength(Result) + 1);
+    Result[GetArrayLength(Result) - 1] := Copy(Temp, 1, P - 1);
+    Delete(Temp, 1, P);
+  end;
+end;
+
+// ==========================
+// Validação de hora hh:mm:ss
+// ==========================
 function IsValidTimeFormat(TimeStr: String): Boolean;
 var
   Parts: TArrayOfString;
   Hour, Min, Sec: Integer;
 begin
   Result := False;
-  Parts := SplitString(TimeStr, ':');
+  Parts := Split(TimeStr, ':');
   if GetArrayLength(Parts) <> 3 then Exit;
 
   if not TryStrToInt(Parts[0], Hour) then Exit;
@@ -96,251 +113,111 @@ begin
   Result := True;
 end;
 
-// Normaliza o formato hh:mm:ss
+// ==========================
+// Normaliza hh:mm:ss
+// ==========================
 function NormalizeTimeFormat(TimeStr: String): String;
 var
   Parts: TArrayOfString;
 begin
-  Parts := SplitString(TimeStr, ':');
-  Result := Format('%.2d:%.2d:%.2d', [StrToIntDef(Parts[0], 0), StrToIntDef(Parts[1], 0), StrToIntDef(Parts[2], 0)]);
+  Parts := Split(TimeStr, ':');
+  Result := Format('%.2d:%.2d:%.2d',
+    [StrToIntDef(Parts[0], 0), StrToIntDef(Parts[1], 0), StrToIntDef(Parts[2], 0)]);
 end;
 
-// Ajusta diretório de instalação sem exigir admin
-function GetInstallDir(Default: String): String;
-begin
-  Result := ExpandConstant('{localappdata}\Ahead\Notificador');
-end;
-
-// Ajusta pasta de atalhos sem exigir admin
-function GetProgramsFolder(Default: String): String;
-begin
-  Result := ExpandConstant('{userprograms}');
-end;
-
-// Inicialização do assistente 
-procedure InitializeWizard;
-begin
-  DBName := 'GoAheadBD';
-  DBProvider := 'Oracle.DataAccess.Client';
-  CustomDataSource := '192.168.0.214';
-  CustomPort := '1522';
-  CustomBase := 'prod.ou.local';
-  CustomUserId := 'AHEAD';
-  CustomPassword := 'AHEAD';
-  TempoIniciarExecucao := '00:01:00';
-  LinkWeb := 'www.google.com.br';
-  ClientSettingsProvider := '';
-
-  // Página de usuário 
-  UserPage := CreateInputQueryPage(wpSelectDir, 'Configuração de Usuário', 'Defina o usuário', 'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.');
-  UserPage.Add('Nome do usuário:', False);
-  UserPage.Values[0] := ExpandConstant('{username}');
-
-  EnableAdvancedCheckBox := TNewCheckBox.Create(WizardForm);
-  EnableAdvancedCheckBox.Parent := UserPage.Surface;
-  EnableAdvancedCheckBox.Caption := 'Avançado';
-  EnableAdvancedCheckBox.Top := UserPage.Edits[0].Top + 30;
-  EnableAdvancedCheckBox.Left := UserPage.Edits[0].Left;
-  EnableAdvancedCheckBox.Checked := False;
-
-  // Página de Configurações de Conexão 
-  ConnectionPage := CreateInputQueryPage(UserPage.ID, 'Configurações de Conexão', 'Conexão com o banco de dados', 'Altere os parâmetros de conexão se necessário.');
-  ConnectionPage.Add('Nome da conexão (DBName):', False);
-  ConnectionPage.Add('Provider (DBProvider):', False);
-  ConnectionPage.Add('Data Source:', False);
-  ConnectionPage.Add('Porta:', False);
-  ConnectionPage.Add('Base:', False);
-  ConnectionPage.Values[0] := DBName;
-  ConnectionPage.Values[1] := DBProvider;
-  ConnectionPage.Values[2] := CustomDataSource;
-  ConnectionPage.Values[3] := CustomPort;
-  ConnectionPage.Values[4] := CustomBase;
-
-  // Página de Credenciais 
-  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID, 'Credenciais', 'Acesso ao banco de dados', 'Informe o usuário e senha do banco de dados.');
-  CredentialsPage.Add('User Id:', False);
-  CredentialsPage.Add('Password:', True);
-  CredentialsPage.Values[0] := CustomUserId;
-  CredentialsPage.Values[1] := CustomPassword;
-
-  // Página de Configurações do Aplicativo 
-  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID, 'Configurações do Aplicativo', 'Configurações adicionais', 'Altere parâmetros do aplicativo, se necessário.');
-  AppConfigPage.Add('Tempo para iniciar (hh:mm:ss):', False);
-  AppConfigPage.Add('Link Web:', False);
-  AppConfigPage.Add('ClientSettingsProvider:', False);
-  AppConfigPage.Values[0] := TempoIniciarExecucao;
-  AppConfigPage.Values[1] := LinkWeb;
-  AppConfigPage.Values[2] := '';
-
-  // Página de progresso 
-  ConfigPage := CreateOutputProgressPage('Atualizando variáveis do arquivo de configuração', 'Aguarde enquanto as alterações são aplicadas.');
-  CancelConfig := False;
-end;
-
-// Controle de exibição das páginas 
-function ShouldSkipPage(PageID: Integer): Boolean;
-begin
-  if (PageID = ConnectionPage.ID) or (PageID = CredentialsPage.ID) or (PageID = AppConfigPage.ID) then
-    Result := not EnableAdvanced
-  else
-    Result := False;
-end;
-
-// Validação dos dados 
-function NextButtonClick(CurPageID: Integer): Boolean;
-var
-  i: Integer;
+// ==========================
+// Validação de campos
+// ==========================
+function ValidateFields: Boolean;
 begin
   Result := True;
 
-  if CurPageID = UserPage.ID then
+  if (Trim(WizardForm.DirEdit.Text) = '') then
   begin
-    if Trim(UserPage.Values[0]) = '' then
-    begin
-      MsgBox('É necessário informar um nome de usuário!', mbError, MB_OK);
-      Result := False;
-    end
-    else
-    begin
-      CustomUserName := UserPage.Values[0];
-      EnableAdvanced := EnableAdvancedCheckBox.Checked;
-    end;
+    MsgBox('O diretório de instalação não pode estar vazio.', mbError, MB_OK);
+    Result := False;
+    Exit;
   end;
 
-  if (CurPageID = AppConfigPage.ID) and EnableAdvanced then
+  if (Trim(WizardForm.UserInfoPage.Values[0]) = '') then
   begin
-    // Validação dos campos avançados
-    for i := 0 to 4 do
-    begin
-      if Trim(ConnectionPage.Values[i]) = '' then
-      begin
-        MsgBox('Todos os campos de conexão são obrigatórios!', mbError, MB_OK);
-        Result := False;
-        Exit;
-      end;
-    end;
+    MsgBox('O campo "Servidor" não pode estar vazio.', mbError, MB_OK);
+    Result := False;
+    Exit;
+  end;
 
-    if Trim(CredentialsPage.Values[0]) = '' then
-    begin
-      MsgBox('Usuário do banco de dados não pode estar vazio!', mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
+  if (Trim(WizardForm.UserInfoPage.Values[1]) = '') then
+  begin
+    MsgBox('O campo "Banco de Dados" não pode estar vazio.', mbError, MB_OK);
+    Result := False;
+    Exit;
+  end;
 
-    if Trim(CredentialsPage.Values[1]) = '' then
-    begin
-      MsgBox('Senha do banco de dados não pode estar vazia!', mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
+  if (Trim(WizardForm.UserInfoPage.Values[2]) = '') and
+     (WizardForm.UserInfoPage.Values[2] <> 'ClientSettingsProvider') then
+  begin
+    MsgBox('O campo não pode estar vazio, exceto o ClientSettingsProvider.', mbError, MB_OK);
+    Result := False;
+    Exit;
+  end;
 
-    if Trim(AppConfigPage.Values[0]) = '' then
-    begin
-      MsgBox('Tempo para iniciar não pode estar vazio!', mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
-
-    if not IsValidTimeFormat(AppConfigPage.Values[0]) then
-    begin
-      MsgBox('O tempo para iniciar deve estar no formato hh:mm:ss (ex: 00:01:00)', mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
-
-    AppConfigPage.Values[0] := NormalizeTimeFormat(AppConfigPage.Values[0]);
-
-    if Trim(AppConfigPage.Values[1]) = '' then
-    begin
-      MsgBox('Link Web não pode estar vazio!', mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
-
-    if not TryStrToInt(ConnectionPage.Values[3], i) then
-    begin
-      MsgBox('A porta deve ser um número válido!', mbError, MB_OK);
-      Result := False;
-      Exit;
-    end;
-
-    DBName := ConnectionPage.Values[0];
-    DBProvider := ConnectionPage.Values[1];
-    CustomDataSource := ConnectionPage.Values[2];
-    CustomPort := ConnectionPage.Values[3];
-    CustomBase := ConnectionPage.Values[4];
-    CustomUserId := CredentialsPage.Values[0];
-    CustomPassword := CredentialsPage.Values[1];
-    TempoIniciarExecucao := AppConfigPage.Values[0];
-    LinkWeb := AppConfigPage.Values[1];
-    ClientSettingsProvider := AppConfigPage.Values[2];
+  if not IsValidTimeFormat(WizardForm.UserInfoPage.Values[3]) then
+  begin
+    MsgBox('O formato da hora deve ser hh:mm:ss.', mbError, MB_OK);
+    Result := False;
+    Exit;
   end;
 end;
 
-// Cancelamento 
-procedure CancelButtonClick(CurPageID: Integer; var Cancel, Confirm: Boolean);
+// ==========================
+// Antes de instalar
+// ==========================
+function NextButtonClick(CurPageID: Integer): Boolean;
 begin
-  if CurPageID = ConfigPage.ID then
+  Result := True;
+
+  if CurPageID = wpUserInfo then
   begin
-    CancelConfig := True;
-    Confirm := False;
+    Result := ValidateFields;
   end;
 end;
 
-// Aplicação das alterações 
+// ==========================
+// Instalação
+// ==========================
 procedure CurStepChanged(CurStep: TSetupStep);
-var
-  ConfigFile, ConfigText: String;
-  ConfigContent: TStringList;
-  I: Integer;
 begin
-  if CurStep = ssPostInstall then
+  if CurStep = ssInstall then
   begin
-    ConfigFile := ExpandConstant('{app}\NotificadorAhead.exe.config');
-    ConfigPage.Show;
-    ConfigPage.SetProgress(0, 100);
+    try
+      // Exemplo de escrita de chave sem sobrescrever
+      if not RegValueExists(HKLM, 'Software\MyApp', 'Servidor') then
+        RegWriteStringValue(HKLM, 'Software\MyApp', 'Servidor', WizardForm.UserInfoPage.Values[0]);
 
-    ConfigContent := TStringList.Create;
-    ConfigContent.LoadFromFile(ConfigFile);
-    ConfigText := ConfigContent.Text;
+      if not RegValueExists(HKLM, 'Software\MyApp', 'BancoDados') then
+        RegWriteStringValue(HKLM, 'Software\MyApp', 'BancoDados', WizardForm.UserInfoPage.Values[1]);
 
-    for I := 1 to 100 do
-    begin
-      if CancelConfig then
-      begin
-        MsgBox('Configuração cancelada. Rollback executado.', mbError, MB_OK);
-        ConfigContent.Free;
-        ConfigPage.Hide;
-        Exit;
-      end;
+      if not RegValueExists(HKLM, 'Software\MyApp', 'ClientSettingsProvider') then
+        RegWriteStringValue(HKLM, 'Software\MyApp', 'ClientSettingsProvider', WizardForm.UserInfoPage.Values[2]);
+
+      if not RegValueExists(HKLM, 'Software\MyApp', 'Horario') then
+        RegWriteStringValue(HKLM, 'Software\MyApp', 'Horario', NormalizeTimeFormat(WizardForm.UserInfoPage.Values[3]));
 
       WizardForm.ProcessMessages;
-      ConfigPage.SetProgress(I, 100);
-      ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', '');
-
-      if I = 10 then
-        StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True);
-
-      if I = 30 then
-        StringChangeEx(ConfigText, '<add name="GoAheadBD"', '<add name="' + DBName + '" providerName="' + DBProvider + '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';" />', True);
-
-      if I = 50 then
-        StringChangeEx(ConfigText, '<add key="Usuario" value=', '<add key="Usuario" value="' + CustomUserName + '" />', True);
-
-      if I = 70 then
-      begin
-        StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=', '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True);
-        StringChangeEx(ConfigText, '<add key="LinkWeb" value=', '<add key="LinkWeb" value="' + LinkWeb + '" />', True);
-        StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value=', '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True);
-      end;
+    except
+      RollbackNeeded := True;
+      RaiseException('Erro ao gravar no registro. A instalação será revertida.');
     end;
-
-    ConfigContent.Text := ConfigText;
-    ConfigContent.SaveToFile(ConfigFile);
-    ConfigContent.Free;
-
-    ConfigPage.Hide;
-    MsgBox('Configuração concluída!', mbInformation, MB_OK);
   end;
 end;
 
+// ==========================
+// Rollback
+// ==========================
+procedure DeinitializeSetup;
+begin
+  if RollbackNeeded then
+  begin
+    RegDeleteKeyIncludingSubkeys(HKLM, 'Software\MyApp');
+  end;
+end;
