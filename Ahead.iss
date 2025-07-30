@@ -58,24 +58,53 @@ Name: "{userdesktop}\Notificador Ahead"; Filename: "{app}\{#MyAppExeName}"
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-// Variáveis globais
-var
-  UserPage: TInputQueryWizardPage;
-  EnableAdvancedCheckBox: TNewCheckBox;
-  ConnectionPage: TInputQueryWizardPage;
-  CredentialsPage: TInputQueryWizardPage;
-  AppConfigPage: TInputQueryWizardPage;
-  ConfigPage: TOutputProgressWizardPage;
+// Variáveis globais 
+var 
+  UserPage: TInputQueryWizardPage; 
+  EnableAdvancedCheckBox: TNewCheckBox; 
+  ConnectionPage: TInputQueryWizardPage; 
+  CredentialsPage: TInputQueryWizardPage; 
+  AppConfigPage: TInputQueryWizardPage; 
+  ConfigPage: TOutputProgressWizardPage; 
   CancelConfig: Boolean;
 
-  // Configurações Avançadas
-  DBName, DBProvider, CustomDataSource, CustomPort, CustomBase: String;
-  CustomUserId, CustomPassword: String;
-  TempoIniciarExecucao, LinkWeb, ClientSettingsProvider: String;
-  CustomUserName: String;
-  EnableAdvanced: Boolean;
+  // Configurações Avançadas 
+  DBName, DBProvider, CustomDataSource, CustomPort, CustomBase: String; 
+  CustomUserId, CustomPassword: String; 
+  TempoIniciarExecucao, LinkWeb, ClientSettingsProvider: String; 
+  CustomUserName: String; 
+  EnableAdvanced: Boolean; 
 
-// Funções utilitárias
+// Função para validar hh:mm:ss
+function IsValidTimeFormat(TimeStr: String): Boolean;
+var
+  Parts: TArrayOfString;
+  Hour, Min, Sec: Integer;
+begin
+  Result := False;
+  Parts := SplitString(TimeStr, ':');
+  if GetArrayLength(Parts) <> 3 then Exit;
+
+  if not TryStrToInt(Parts[0], Hour) then Exit;
+  if not TryStrToInt(Parts[1], Min) then Exit;
+  if not TryStrToInt(Parts[2], Sec) then Exit;
+
+  if (Hour < 0) or (Hour > 23) then Exit;
+  if (Min < 0) or (Min > 59) then Exit;
+  if (Sec < 0) or (Sec > 59) then Exit;
+
+  Result := True;
+end;
+
+// Normaliza o formato hh:mm:ss (ex: 1:5:9 -> 01:05:09)
+function NormalizeTimeFormat(TimeStr: String): String;
+var
+  Parts: TArrayOfString;
+begin
+  Parts := SplitString(TimeStr, ':');
+  Result := Format('%.2d:%.2d:%.2d', [StrToIntDef(Parts[0], 0), StrToIntDef(Parts[1], 0), StrToIntDef(Parts[2], 0)]);
+end;
+
 function IsAdminInstallMode: Boolean;
 begin
   Result := IsAdmin;
@@ -97,69 +126,67 @@ begin
     Result := ExpandConstant('{userprograms}');
 end;
 
-// Inicialização do assistente
+// Inicialização do assistente 
 procedure InitializeWizard;
 begin
-  // Página de usuário
-  UserPage := CreateInputQueryPage(wpSelectDir,
-    'Configuração de Usuário',
-    'Defina o usuário',
-    'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.');
+  DBName := 'GoAheadBD';
+  DBProvider := 'Oracle.DataAccess.Client';
+  CustomDataSource := '192.168.0.214';
+  CustomPort := '1522';
+  CustomBase := 'prod.ou.local';
+  CustomUserId := 'AHEAD';
+  CustomPassword := 'AHEAD';
+  TempoIniciarExecucao := '00:01:00';
+  LinkWeb := 'www.google.com.br';
+  ClientSettingsProvider := '';
+
+  // Página de usuário 
+  UserPage := CreateInputQueryPage(wpSelectDir, 'Configuração de Usuário', 'Defina o usuário', 'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.');
   UserPage.Add('Nome do usuário:', False);
   UserPage.Values[0] := ExpandConstant('{username}');
 
   EnableAdvancedCheckBox := TNewCheckBox.Create(WizardForm);
   EnableAdvancedCheckBox.Parent := UserPage.Surface;
-  EnableAdvancedCheckBox.Caption := 'Habilitar configurações avançadas';
+  EnableAdvancedCheckBox.Caption := 'Avançado';
   EnableAdvancedCheckBox.Top := UserPage.Edits[0].Top + 30;
   EnableAdvancedCheckBox.Left := UserPage.Edits[0].Left;
   EnableAdvancedCheckBox.Checked := False;
 
-  // Página de Configurações de Conexão
-  ConnectionPage := CreateInputQueryPage(UserPage.ID,
-    'Configurações de Conexão',
-    'Conexão com o banco de dados',
-    'Altere os parâmetros de conexão se necessário.');
+  // Página de Configurações de Conexão 
+  ConnectionPage := CreateInputQueryPage(UserPage.ID, 'Configurações de Conexão', 'Conexão com o banco de dados', 'Altere os parâmetros de conexão se necessário.');
   ConnectionPage.Add('Nome da conexão (DBName):', False);
   ConnectionPage.Add('Provider (DBProvider):', False);
   ConnectionPage.Add('Data Source:', False);
   ConnectionPage.Add('Porta:', False);
   ConnectionPage.Add('Base:', False);
+  ConnectionPage.Values[0] := DBName;
+  ConnectionPage.Values[1] := DBProvider;
+  ConnectionPage.Values[2] := CustomDataSource;
+  ConnectionPage.Values[3] := CustomPort;
+  ConnectionPage.Values[4] := CustomBase;
 
-  ConnectionPage.Values[0] := 'GoAheadBD';
-  ConnectionPage.Values[1] := 'Oracle.DataAccess.Client';
-  ConnectionPage.Values[2] := '192.168.0.124';
-  ConnectionPage.Values[3] := '1522';
-  ConnectionPage.Values[4] := 'prod.ou.local';
-
-  // Página de Credenciais
-  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID,
-    'Credenciais',
-    'Acesso ao banco de dados',
-    'Informe o usuário e senha do banco de dados.');
+  // Página de Credenciais 
+  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID, 'Credenciais', 'Acesso ao banco de dados', 'Informe o usuário e senha do banco de dados.');
   CredentialsPage.Add('User Id:', False);
   CredentialsPage.Add('Password:', True);
-  CredentialsPage.Values[0] := 'AHEAD';
-  CredentialsPage.Values[1] := 'AHEAD';
+  CredentialsPage.Values[0] := CustomUserId;
+  CredentialsPage.Values[1] := CustomPassword;
 
-  // Página de Configurações do Aplicativo
-  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID,
-    'Configurações do Aplicativo',
-    'Configurações adicionais',
-    'Altere parâmetros do aplicativo, se necessário.');
+  // Página de Configurações do Aplicativo 
+  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID, 'Configurações do Aplicativo', 'Configurações adicionais', 'Altere parâmetros do aplicativo, se necessário.');
   AppConfigPage.Add('Tempo para iniciar (hh:mm:ss):', False);
   AppConfigPage.Add('Link Web:', False);
   AppConfigPage.Add('ClientSettingsProvider:', False);
-  AppConfigPage.Values[0] := '00:01:00';
-  AppConfigPage.Values[1] := 'www.google.com.br';
+  AppConfigPage.Values[0] := TempoIniciarExecucao;
+  AppConfigPage.Values[1] := LinkWeb;
   AppConfigPage.Values[2] := '';
 
-  // Página de progresso
+  // Página de progresso 
   ConfigPage := CreateOutputProgressPage('Atualizando variáveis do arquivo de configuração', 'Aguarde enquanto as alterações são aplicadas.');
   CancelConfig := False;
 end;
 
-// Controle de exibição das páginas
+// Controle de exibição das páginas 
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
   if (PageID = ConnectionPage.ID) or (PageID = CredentialsPage.ID) or (PageID = AppConfigPage.ID) then
@@ -168,8 +195,10 @@ begin
     Result := False;
 end;
 
-// Validação dos dados
+// Validação dos dados 
 function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  i: Integer;
 begin
   Result := True;
 
@@ -187,9 +216,63 @@ begin
     end;
   end;
 
-  if CurPageID = AppConfigPage.ID then
-  if EnableAdvanced then
+  if (CurPageID = AppConfigPage.ID) and EnableAdvanced then
   begin
+    // Validação dos campos avançados
+    for i := 0 to 4 do
+    begin
+      if Trim(ConnectionPage.Values[i]) = '' then
+      begin
+        MsgBox('Todos os campos de conexão são obrigatórios!', mbError, MB_OK);
+        Result := False;
+        Exit;
+      end;
+    end;
+
+    if Trim(CredentialsPage.Values[0]) = '' then
+    begin
+      MsgBox('Usuário do banco de dados não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if Trim(CredentialsPage.Values[1]) = '' then
+    begin
+      MsgBox('Senha do banco de dados não pode estar vazia!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if Trim(AppConfigPage.Values[0]) = '' then
+    begin
+      MsgBox('Tempo para iniciar não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if not IsValidTimeFormat(AppConfigPage.Values[0]) then
+    begin
+      MsgBox('O tempo para iniciar deve estar no formato hh:mm:ss (ex: 00:01:00)', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    AppConfigPage.Values[0] := NormalizeTimeFormat(AppConfigPage.Values[0]);
+
+    if Trim(AppConfigPage.Values[1]) = '' then
+    begin
+      MsgBox('Link Web não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if not TryStrToInt(ConnectionPage.Values[3], i) then
+    begin
+      MsgBox('A porta deve ser um número válido!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
     DBName := ConnectionPage.Values[0];
     DBProvider := ConnectionPage.Values[1];
     CustomDataSource := ConnectionPage.Values[2];
@@ -200,25 +283,10 @@ begin
     TempoIniciarExecucao := AppConfigPage.Values[0];
     LinkWeb := AppConfigPage.Values[1];
     ClientSettingsProvider := AppConfigPage.Values[2];
-  end
-  else
-  begin
-    // Valores padrão quando NÃO marca as opções avançadas
-    DBName := 'GoAheadBD';
-    DBProvider := 'Oracle.DataAccess.Client';
-    CustomDataSource := '192.168.0.124';
-    CustomPort := '1522';
-    CustomBase := 'prod.ou.local';
-    CustomUserId := 'AHEAD';
-    CustomPassword := 'AHEAD';
-    TempoIniciarExecucao := '00:01:00';
-    LinkWeb := 'www.google.com.br';
-    ClientSettingsProvider := '';
   end;
-
 end;
 
-// Cancelamento
+// Cancelamento 
 procedure CancelButtonClick(CurPageID: Integer; var Cancel, Confirm: Boolean);
 begin
   if CurPageID = ConfigPage.ID then
@@ -228,7 +296,7 @@ begin
   end;
 end;
 
-// Aplicação das alterações
+// Aplicação das alterações 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ConfigFile, ConfigText: String;
@@ -238,7 +306,6 @@ begin
   if CurStep = ssPostInstall then
   begin
     ConfigFile := ExpandConstant('{app}\NotificadorAhead.exe.config');
-
     ConfigPage.Show;
     ConfigPage.SetProgress(0, 100);
 
@@ -250,40 +317,30 @@ begin
     begin
       if CancelConfig then
       begin
-        MsgBox('Configuração cancelada.', mbError, MB_OK);
+        MsgBox('Configuração cancelada. Rollback executado.', mbError, MB_OK);
         ConfigContent.Free;
         ConfigPage.Hide;
         Exit;
       end;
 
-      Sleep(20);
+      WizardForm.ProcessMessages;
       ConfigPage.SetProgress(I, 100);
       ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', '');
 
       if I = 10 then
-        StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', 
-          '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True);
+        StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True);
 
       if I = 30 then
-        StringChangeEx(ConfigText, '<add name="GoAheadBD" providerName="Oracle.DataAccess.Client" connectionString="',
-          '<add name="' + DBName + '" providerName="' + DBProvider +
-          '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort +
-          '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';"', True);
+        StringChangeEx(ConfigText, '<add name="GoAheadBD"', '<add name="' + DBName + '" providerName="' + DBProvider + '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';" />', True);
 
       if I = 50 then
-        StringChangeEx(ConfigText, '<add key="Usuario" value=', 
-          '<add key="Usuario" value="' + CustomUserName + '" />', True);
+        StringChangeEx(ConfigText, '<add key="Usuario" value=', '<add key="Usuario" value="' + CustomUserName + '" />', True);
 
       if I = 70 then
       begin
-        StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=',
-          '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True);
-
-        StringChangeEx(ConfigText, '<add key="LinkWeb" value="',
-          '<add key="LinkWeb" value="' + LinkWeb + '" />', True);
-
-        StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value="',
-          '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True);
+        StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=', '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True);
+        StringChangeEx(ConfigText, '<add key="LinkWeb" value=', '<add key="LinkWeb" value="' + LinkWeb + '" />', True);
+        StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value=', '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True);
       end;
     end;
 
