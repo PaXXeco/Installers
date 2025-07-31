@@ -180,6 +180,8 @@ end;
   
 // Validação dos dados 
 function NextButtonClick(CurPageID: Integer): Boolean; 
+var
+  i: Integer;
 begin 
   Result := True; 
    
@@ -197,8 +199,55 @@ begin
     end; 
   end; 
   
-  if CurPageID = AppConfigPage.ID then 
+  if (CurPageID = AppConfigPage.ID) and EnableAdvanced then
+  begin
+    // Validação dos campos avançados
+    for i := 0 to 4 do
+    begin
+      if Trim(ConnectionPage.Values[i]) = '' then
+      begin
+        MsgBox('Todos os campos de conexão são obrigatórios!', mbError, MB_OK);
+        Result := False;
+        Exit;
+      end;
+    end;
+
+    if Trim(CredentialsPage.Values[0]) = '' then
+    begin
+      MsgBox('Usuário do banco de dados não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if Trim(CredentialsPage.Values[1]) = '' then
+    begin
+      MsgBox('Senha do banco de dados não pode estar vazia!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if Trim(AppConfigPage.Values[0]) = '' then
+    begin
+      MsgBox('Tempo para iniciar não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if Trim(AppConfigPage.Values[1]) = '' then
+    begin
+      MsgBox('Link Web não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if not TryStrToInt(ConnectionPage.Values[3], i) then
   begin 
+      MsgBox('A porta deve ser um número válido!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    // Só sobrescreve se avançado estiver marcado
     DBName := ConnectionPage.Values[0]; 
     DBProvider := ConnectionPage.Values[1]; 
     CustomDataSource := ConnectionPage.Values[2]; 
@@ -225,18 +274,24 @@ end;
 // Aplicação das alterações 
 procedure CurStepChanged(CurStep: TSetupStep); 
 var 
-  ConfigFile, ConfigText: String; 
+  ConfigFile, BackupFile, ConfigText: String;
   ConfigContent: TStringList; 
   I: Integer; 
 begin 
   if CurStep = ssPostInstall then 
   begin 
     ConfigFile := ExpandConstant('{app}\NotificadorAhead.exe.config'); 
+    BackupFile := ConfigFile + '.bak';
+
+    // Backup para rollback
+    if FileExists(ConfigFile) then
+      FileCopy(ConfigFile, BackupFile, False);
   
     ConfigPage.Show; 
     ConfigPage.SetProgress(0, 100); 
   
-    ConfigContent := TStringList.Create; 
+    ConfigContent := TStringList.Create;
+    try
     ConfigContent.LoadFromFile(ConfigFile); 
     ConfigText := ConfigContent.Text; 
   
@@ -246,37 +301,31 @@ begin
       begin 
         MsgBox('Configuração cancelada.', mbError, MB_OK); 
         ConfigContent.Free; 
+          FileCopy(BackupFile, ConfigFile, True); // rollback
         ConfigPage.Hide; 
         Exit; 
       end; 
   
-      Sleep(20); 
       ConfigPage.SetProgress(I, 100); 
       ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', ''); 
+        WizardForm.Repaint; // atualização visual rápida
+      end;
   
-      if I = 10 then 
         StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True); 
-  
-      if I = 30 then 
         StringChangeEx(ConfigText, '<add name="GoAheadBD"', '<add name="' + DBName + '" providerName="' + DBProvider + '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';" />', True); 
-  
-      if I = 50 then 
         StringChangeEx(ConfigText, '<add key="Usuario" value=', '<add key="Usuario" value="' + CustomUserName + '" />', True); 
-  
-      if I = 70 then 
-      begin 
         StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=', '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True); 
-  
         StringChangeEx(ConfigText, '<add key="LinkWeb" value=', '<add key="LinkWeb" value="' + LinkWeb + '" />', True); 
-  
         StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value=', '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True); 
-      end; 
-    end; 
   
     ConfigContent.Text := ConfigText; 
     ConfigContent.SaveToFile(ConfigFile); 
-    ConfigContent.Free; 
+    except
+      FileCopy(BackupFile, ConfigFile, True); // rollback
+      MsgBox('Erro ao aplicar as alterações! O arquivo original foi restaurado.', mbError, MB_OK);
+    end;
   
+    ConfigContent.Free;
     ConfigPage.Hide; 
     MsgBox('Configuração concluída!', mbInformation, MB_OK); 
   end; 
