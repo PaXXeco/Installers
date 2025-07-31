@@ -57,7 +57,6 @@ Name: "{userdesktop}\Notificador Ahead"; Filename: "{app}\{#MyAppExeName}"
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent 
   
 [Code] 
-// Variáveis globais 
 var 
   UserPage: TInputQueryWizardPage; 
   EnableAdvancedCheckBox: TNewCheckBox; 
@@ -65,16 +64,13 @@ var
   CredentialsPage: TInputQueryWizardPage; 
   AppConfigPage: TInputQueryWizardPage; 
   ConfigPage: TOutputProgressWizardPage; 
-  CancelConfig: Boolean; 
-  
-  // Configurações Avançadas 
+  CancelConfig: Boolean;  
   DBName, DBProvider, CustomDataSource, CustomPort, CustomBase: String; 
   CustomUserId, CustomPassword: String; 
   TempoIniciarExecucao, LinkWeb, ClientSettingsProvider: String; 
   CustomUserName: String; 
   EnableAdvanced: Boolean; 
- 
-// Funções utilitárias 
+
 function IsAdminInstallMode: Boolean; 
 begin 
   Result := IsAdmin; 
@@ -96,27 +92,22 @@ begin
     Result := ExpandConstant('{userprograms}'); 
 end; 
   
-// Inicialização do assistente 
-procedure InitializeWizard; 
-begin 
-  DBName := 'GoAheadBD'; 
-  DBProvider := 'Oracle.DataAccess.Client'; 
-  CustomDataSource := '192.168.0.214'; 
-  CustomPort := '1522'; 
-  CustomBase := 'prod.ou.local'; 
-  CustomUserId := 'AHEAD'; 
-  CustomPassword := 'AHEAD'; 
-  TempoIniciarExecucao := '00:01:00'; 
-  LinkWeb := 'www.google.com.br'; 
-  ClientSettingsProvider := ''; 
+procedure InitializeWizard;
+begin
+  DBName := 'GoAheadBD';
+  DBProvider := 'Oracle.DataAccess.Client';
+  CustomDataSource := '192.168.0.214';
+  CustomPort := '1522';
+  CustomBase := 'prod.ou.local';
+  CustomUserId := 'AHEAD';
+  CustomPassword := 'AHEAD';
+  TempoIniciarExecucao := '00:01:00';
+  LinkWeb := 'www.google.com.br';
+  ClientSettingsProvider := '';
    
-  // Página de usuário 
-  UserPage := CreateInputQueryPage(wpSelectDir, 
-    'Configuração de Usuário', 
-    'Defina o usuário', 
-    'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.'); 
-  UserPage.Add('Nome do usuário:', False); 
-  UserPage.Values[0] := ExpandConstant('{username}'); 
+  UserPage := CreateInputQueryPage(wpSelectDir, 'Configuração de Usuário', 'Defina o usuário', 'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.');
+  UserPage.Add('Nome do usuário:', False);
+  UserPage.Values[0] := ExpandConstant('{username}');
   
   EnableAdvancedCheckBox := TNewCheckBox.Create(WizardForm); 
   EnableAdvancedCheckBox.Parent := UserPage.Surface; 
@@ -125,11 +116,7 @@ begin
   EnableAdvancedCheckBox.Left := UserPage.Edits[0].Left; 
   EnableAdvancedCheckBox.Checked := False; 
   
-  // Página de Configurações de Conexão 
-  ConnectionPage := CreateInputQueryPage(UserPage.ID, 
-    'Configurações de Conexão', 
-    'Conexão com o banco de dados', 
-    'Altere os parâmetros de conexão se necessário.'); 
+  ConnectionPage := CreateInputQueryPage(UserPage.ID, 'Configurações de Conexão', 'Conexão com o banco de dados', 'Altere os parâmetros de conexão se necessário.'); 
   ConnectionPage.Add('Nome da conexão (DBName):', False); 
   ConnectionPage.Add('Provider (DBProvider):', False); 
   ConnectionPage.Add('Data Source:', False); 
@@ -142,21 +129,13 @@ begin
   ConnectionPage.Values[3] := CustomPort;
   ConnectionPage.Values[4] := CustomBase;
   
-  // Página de Credenciais 
-  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID, 
-    'Credenciais', 
-    'Acesso ao banco de dados', 
-    'Informe o usuário e senha do banco de dados.'); 
+  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID, 'Credenciais', 'Acesso ao banco de dados', 'Informe o usuário e senha do banco de dados.'); 
   CredentialsPage.Add('User Id:', False); 
   CredentialsPage.Add('Password:', True); 
   CredentialsPage.Values[0] := CustomUserId;
   CredentialsPage.Values[1] := CustomPassword;
   
-  // Página de Configurações do Aplicativo 
-  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID, 
-    'Configurações do Aplicativo', 
-    'Configurações adicionais', 
-    'Altere parâmetros do aplicativo, se necessário.'); 
+  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID, 'Configurações do Aplicativo', 'Configurações adicionais', 'Altere parâmetros do aplicativo, se necessário.');
   AppConfigPage.Add('Tempo para iniciar (hh:mm:ss):', False); 
   AppConfigPage.Add('Link Web:', False); 
   AppConfigPage.Add('ClientSettingsProvider:', False); 
@@ -164,21 +143,18 @@ begin
   AppConfigPage.Values[1] := LinkWeb;
   AppConfigPage.Values[2] := ClientSettingsProvider;
   
-  // Página de progresso 
   ConfigPage := CreateOutputProgressPage('Atualizando variáveis do arquivo de configuração', 'Aguarde enquanto as alterações são aplicadas.'); 
   CancelConfig := False; 
 end; 
   
-// Controle de exibição das páginas 
 function ShouldSkipPage(PageID: Integer): Boolean; 
-begin 
+begin
   if (PageID = ConnectionPage.ID) or (PageID = CredentialsPage.ID) or (PageID = AppConfigPage.ID) then 
     Result := not EnableAdvanced 
   else 
     Result := False; 
-end; 
-  
-// Validação dos dados 
+end;
+
 function NextButtonClick(CurPageID: Integer): Boolean; 
 begin 
   Result := True; 
@@ -211,8 +187,7 @@ begin
     ClientSettingsProvider := AppConfigPage.Values[2]; 
   end; 
 end; 
-  
-// Cancelamento 
+
 procedure CancelButtonClick(CurPageID: Integer; var Cancel, Confirm: Boolean); 
 begin 
   if CurPageID = ConfigPage.ID then 
@@ -222,7 +197,6 @@ begin
   end; 
 end; 
   
-// Aplicação das alterações 
 procedure CurStepChanged(CurStep: TSetupStep); 
 var 
   ConfigFile, BackupFile, ConfigText: String;
@@ -234,50 +208,57 @@ begin
     ConfigFile := ExpandConstant('{app}\NotificadorAhead.exe.config'); 
     BackupFile := ConfigFile + '.bak';
 
-    // Backup para rollback
     if FileExists(ConfigFile) then
+    begin
       FileCopy(ConfigFile, BackupFile, False);
+    end;
   
     ConfigPage.Show; 
     ConfigPage.SetProgress(0, 100); 
   
     ConfigContent := TStringList.Create;
+
     try
-    ConfigContent.LoadFromFile(ConfigFile); 
-    ConfigText := ConfigContent.Text; 
-  
-    for I := 1 to 100 do 
-    begin 
-      if CancelConfig then 
+      ConfigContent.LoadFromFile(ConfigFile); 
+      ConfigText := ConfigContent.Text; 
+    
+      for I := 1 to 100 do 
       begin 
-        MsgBox('Configuração cancelada.', mbError, MB_OK); 
-        ConfigContent.Free; 
-        ConfigPage.Hide; 
-        Exit; 
-      end; 
-  
-      Sleep(20); 
-      ConfigPage.SetProgress(I, 100); 
-      ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', ''); 
-  
-      if I = 10 then 
-        StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True); 
-  
-      if I = 30 then 
-        StringChangeEx(ConfigText, '<add name="GoAheadBD"', '<add name="' + DBName + '" providerName="' + DBProvider + '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';" />', True); 
-  
-      if I = 50 then 
-        StringChangeEx(ConfigText, '<add key="Usuario" value=', '<add key="Usuario" value="' + CustomUserName + '" />', True); 
-  
-      if I = 70 then 
-      begin 
-        StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=', '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True); 
-  
-        StringChangeEx(ConfigText, '<add key="LinkWeb" value=', '<add key="LinkWeb" value="' + LinkWeb + '" />', True); 
-  
-        StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value=', '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True); 
-      end; 
-    end; 
+        if CancelConfig then 
+        begin 
+          MsgBox('Configuração cancelada.', mbError, MB_OK); 
+          ConfigContent.Free; 
+          ConfigPage.Hide; 
+          Exit; 
+        end; 
+    
+        Sleep(20); 
+        ConfigPage.SetProgress(I, 100); 
+        ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', ''); 
+    
+        if I = 10 then
+        begin
+          StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True); 
+        end;
+
+        if I = 30 then 
+        begin
+          StringChangeEx(ConfigText, '<add name="GoAheadBD"', '<add name="' + DBName + '" providerName="' + DBProvider + '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';" />', True); 
+        end;
+
+        if I = 50 then
+        begin
+          StringChangeEx(ConfigText, '<add key="Usuario" value=', '<add key="Usuario" value="' + CustomUserName + '" />', True); 
+        end;
+        
+        if I = 70 then 
+        begin 
+          StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=', '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True); 
+          StringChangeEx(ConfigText, '<add key="LinkWeb" value=', '<add key="LinkWeb" value="' + LinkWeb + '" />', True); 
+          StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value=', '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True); 
+        end; 
+      end;
+    end;
   
     ConfigContent.Text := ConfigText; 
     ConfigContent.SaveToFile(ConfigFile); 
