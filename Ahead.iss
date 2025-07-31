@@ -237,59 +237,26 @@ begin
 
         if I = 10 then
         begin
-          StringChangeEx(
-            ConfigText,
-            '<add key="LogDeErroCaminhoDoArquivo" value=',
-            '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />',
-            True
-          );
+          StringChangeEx(ConfigText,'<add key="LogDeErroCaminhoDoArquivo" value=','<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />',True);
         end;
 
         if I = 30 then
         begin
-          StringChangeEx(
-            ConfigText,
-            '<add name="GoAheadBD"',
-            '<add name="' + DBName + '" providerName="' + DBProvider +
-            '" connectionString="Data Source=' + CustomDataSource + ':' +
-            CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId +
-            ';Password=' + CustomPassword + ';" />',
-            True
-          );
+          StringChangeEx(ConfigText,'<add name="GoAheadBD"','<add name="' + DBName + '" providerName="' + DBProvider +'" connectionString="Data Source=' + CustomDataSource + ':' +CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId +';Password=' + CustomPassword + ';" />',True);
         end;
 
         if I = 50 then
         begin
-          StringChangeEx(
-            ConfigText,
-            '<add key="Usuario" value=',
-            '<add key="Usuario" value="' + CustomUserName + '" />',
-            True
-          );
+          StringChangeEx(ConfigText,'<add key="Usuario" value=','<add key="Usuario" value="' + CustomUserName + '" />',True);
         end;
 
         if I = 70 then
         begin
-          StringChangeEx(
-            ConfigText,
-            '<add key="TempoIniciarExecucao" value=',
-            '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />',
-            True
-          );
-          StringChangeEx(
-            ConfigText,
-            '<add key="LinkWeb" value=',
-            '<add key="LinkWeb" value="' + LinkWeb + '" />',
-            True
-          );
-          StringChangeEx(
-            ConfigText,
-            '<add key="ClientSettingsProvider.ServiceUri" value=',
-            '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />',
-            True
-          );
+          StringChangeEx(ConfigText,'<add key="TempoIniciarExecucao" value=','<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />',True);
+          StringChangeEx(ConfigText,'<add key="LinkWeb" value=','<add key="LinkWeb" value="' + LinkWeb + '" />',True);
+          StringChangeEx(ConfigText,'<add key="ClientSettingsProvider.ServiceUri" value=','<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />',True);
         end;
-      end;  // fim do for
+      end;
 
       ConfigContent.Text := ConfigText;
       ConfigContent.SaveToFile(ConfigFile);
@@ -299,6 +266,5 @@ begin
 
     ConfigPage.Hide;
     MsgBox('Configuração concluída!', mbInformation, MB_OK);
-  end; // fim do if CurStep
-
-end; 
+  end;
+end;
