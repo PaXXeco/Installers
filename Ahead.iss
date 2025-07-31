@@ -147,101 +147,100 @@ begin
   CancelConfig := False; 
 end; 
   
-function ShouldSkipPage(PageID: Integer): Boolean; 
+function ShouldSkipPage(PageID: Integer): Boolean;
 begin
-  if (PageID = ConnectionPage.ID) or (PageID = CredentialsPage.ID) or (PageID = AppConfigPage.ID) then 
-    Result := not EnableAdvanced 
-  else 
-    Result := False; 
+  if (PageID = ConnectionPage.ID) or (PageID = CredentialsPage.ID) or (PageID = AppConfigPage.ID) then
+    Result := not EnableAdvanced
+  else
+    Result := False;
 end;
 
-function NextButtonClick(CurPageID: Integer): Boolean; 
-begin 
-  Result := True; 
-   
-  if CurPageID = UserPage.ID then 
-  begin 
-    if Trim(UserPage.Values[0]) = '' then 
-    begin 
-      MsgBox('É necessário informar um nome de usuário!', mbError, MB_OK); 
-      Result := False; 
-    end 
-    else 
-    begin 
-      CustomUserName := UserPage.Values[0]; 
-      EnableAdvanced := EnableAdvancedCheckBox.Checked; 
-    end; 
-  end; 
-  
-  if CurPageID = AppConfigPage.ID then 
-  begin 
-    DBName := ConnectionPage.Values[0]; 
-    DBProvider := ConnectionPage.Values[1]; 
-    CustomDataSource := ConnectionPage.Values[2]; 
-    CustomPort := ConnectionPage.Values[3]; 
-    CustomBase := ConnectionPage.Values[4]; 
-    CustomUserId := CredentialsPage.Values[0]; 
-    CustomPassword := CredentialsPage.Values[1]; 
-    TempoIniciarExecucao := AppConfigPage.Values[0]; 
-    LinkWeb := AppConfigPage.Values[1]; 
-    ClientSettingsProvider := AppConfigPage.Values[2]; 
-  end; 
-end; 
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  Result := True;
 
-procedure CancelButtonClick(CurPageID: Integer; var Cancel, Confirm: Boolean); 
-begin 
-  if CurPageID = ConfigPage.ID then 
-  begin 
-    CancelConfig := True; 
-    Confirm := False; 
-  end; 
-end; 
-  
-procedure CurStepChanged(CurStep: TSetupStep); 
-var 
+  if CurPageID = UserPage.ID then
+  begin
+    if Trim(UserPage.Values[0]) = '' then
+    begin
+      MsgBox('É necessário informar um nome de usuário!', mbError, MB_OK);
+      Result := False;
+    end
+    else
+    begin
+      CustomUserName := UserPage.Values[0];
+      EnableAdvanced := EnableAdvancedCheckBox.Checked;
+    end;
+  end;
+
+  if CurPageID = AppConfigPage.ID then
+  begin
+    DBName := ConnectionPage.Values[0];
+    DBProvider := ConnectionPage.Values[1];
+    CustomDataSource := ConnectionPage.Values[2];
+    CustomPort := ConnectionPage.Values[3];
+    CustomBase := ConnectionPage.Values[4];
+    CustomUserId := CredentialsPage.Values[0];
+    CustomPassword := CredentialsPage.Values[1];
+    TempoIniciarExecucao := AppConfigPage.Values[0];
+    LinkWeb := AppConfigPage.Values[1];
+    ClientSettingsProvider := AppConfigPage.Values[2];
+  end;
+end;
+
+procedure CancelButtonClick(CurPageID: Integer; var Cancel, Confirm: Boolean);
+begin
+  if CurPageID = ConfigPage.ID then
+  begin
+    CancelConfig := True;
+    Confirm := False;
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
   ConfigFile, BackupFile, ConfigText: String;
-  ConfigContent: TStringList; 
-  I: Integer; 
-begin 
-  if CurStep = ssPostInstall then 
-  begin 
-    ConfigFile := ExpandConstant('{app}\NotificadorAhead.exe.config'); 
+  ConfigContent: TStringList;
+  I: Integer;
+begin
+  if CurStep = ssPostInstall then
+  begin
+    ConfigFile := ExpandConstant('{app}\NotificadorAhead.exe.config');
     BackupFile := ConfigFile + '.bak';
 
     if FileExists(ConfigFile) then
     begin
       FileCopy(ConfigFile, BackupFile, False);
     end;
-  
-    ConfigPage.Show; 
-    ConfigPage.SetProgress(0, 100); 
-  
+
+    ConfigPage.Show;
+    ConfigPage.SetProgress(0, 100);
     ConfigContent := TStringList.Create;
 
     try
-      ConfigContent.LoadFromFile(ConfigFile); 
-      ConfigText := ConfigContent.Text; 
-    
-      for I := 1 to 100 do 
-      begin 
-        if CancelConfig then 
-        begin 
-          MsgBox('Configuração cancelada.', mbError, MB_OK); 
-          ConfigContent.Free; 
-          ConfigPage.Hide; 
-          Exit; 
-        end; 
-    
-        Sleep(20); 
-        ConfigPage.SetProgress(I, 100); 
-        ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', ''); 
-    
+      ConfigContent.LoadFromFile(ConfigFile);
+      ConfigText := ConfigContent.Text;
+
+      for I := 1 to 100 do
+      begin
+        if CancelConfig then
+        begin
+          MsgBox('Configuração cancelada.', mbError, MB_OK);
+          ConfigContent.Free;
+          ConfigPage.Hide;
+          Exit;
+        end;
+
+        Sleep(20);
+        ConfigPage.SetProgress(I, 100);
+        ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', '');
+
         if I = 10 then
         begin
           StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True); 
         end;
 
-        if I = 30 then 
+        if I = 30 then
         begin
           StringChangeEx(ConfigText, '<add name="GoAheadBD"', '<add name="' + DBName + '" providerName="' + DBProvider + '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';" />', True); 
         end;
@@ -256,15 +255,15 @@ begin
           StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=', '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True); 
           StringChangeEx(ConfigText, '<add key="LinkWeb" value=', '<add key="LinkWeb" value="' + LinkWeb + '" />', True); 
           StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value=', '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True); 
-        end; 
+        end;
       end;
+
+      ConfigContent.Text := ConfigText;
+      ConfigContent.SaveToFile(ConfigFile);
+      ConfigContent.Free;
+
+      ConfigPage.Hide;
+      MsgBox('Configuração concluída!', mbInformation, MB_OK);
     end;
-  
-    ConfigContent.Text := ConfigText; 
-    ConfigContent.SaveToFile(ConfigFile); 
-    ConfigContent.Free; 
-  
-    ConfigPage.Hide; 
-    MsgBox('Configuração concluída!', mbInformation, MB_OK); 
-  end; 
-end; 
+  end;
+end;
