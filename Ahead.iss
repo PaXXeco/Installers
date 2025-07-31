@@ -154,7 +154,6 @@ begin
     Result := False;
 end;
 
-// Validação dos dados
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
   i: Integer;
@@ -177,7 +176,6 @@ begin
 
   if (CurPageID = AppConfigPage.ID) and EnableAdvanced then
   begin
-    // Validação dos campos avançados
     for i := 0 to 4 do
     begin
       if Trim(ConnectionPage.Values[i]) = '' then
@@ -216,14 +214,13 @@ begin
       Exit;
     end;
 
-    if not TryStrToInt(ConnectionPage.Values[3], i) then
+    if StrToIntDef(ConnectionPage.Values[3], -1) <0 then
     begin
       MsgBox('A porta deve ser um número válido!', mbError, MB_OK);
       Result := False;
       Exit;
     end;
 
-    // Só sobrescreve se avançado estiver marcado
     DBName := ConnectionPage.Values[0];
     DBProvider := ConnectionPage.Values[1];
     CustomDataSource := ConnectionPage.Values[2];
