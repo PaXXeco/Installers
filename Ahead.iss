@@ -252,31 +252,38 @@ begin
       begin 
         MsgBox('Configuração cancelada.', mbError, MB_OK); 
         ConfigContent.Free; 
-          FileCopy(BackupFile, ConfigFile, True); // rollback
+        FileCopy(BackupFile, ConfigFile, True);
         ConfigPage.Hide; 
         Exit; 
       end; 
   
+      Sleep(20); 
       ConfigPage.SetProgress(I, 100); 
       ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', ''); 
-        WizardForm.Repaint; // atualização visual rápida
-      end;
   
+      if I = 10 then 
         StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True); 
+  
+      if I = 30 then 
         StringChangeEx(ConfigText, '<add name="GoAheadBD"', '<add name="' + DBName + '" providerName="' + DBProvider + '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';" />', True); 
+  
+      if I = 50 then 
         StringChangeEx(ConfigText, '<add key="Usuario" value=', '<add key="Usuario" value="' + CustomUserName + '" />', True); 
+  
+      if I = 70 then 
+      begin 
         StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=', '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True); 
+  
         StringChangeEx(ConfigText, '<add key="LinkWeb" value=', '<add key="LinkWeb" value="' + LinkWeb + '" />', True); 
+  
         StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value=', '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True); 
+      end; 
+    end; 
   
     ConfigContent.Text := ConfigText; 
     ConfigContent.SaveToFile(ConfigFile); 
-    except
-      FileCopy(BackupFile, ConfigFile, True); // rollback
-      MsgBox('Erro ao aplicar as alterações! O arquivo original foi restaurado.', mbError, MB_OK);
-    end;
+    ConfigContent.Free; 
   
-    ConfigContent.Free;
     ConfigPage.Hide; 
     MsgBox('Configuração concluída!', mbInformation, MB_OK); 
   end; 
