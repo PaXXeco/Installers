@@ -63,13 +63,13 @@ var
   CredentialsPage: TInputQueryWizardPage;
   AppConfigPage: TInputQueryWizardPage;
   ConfigPage: TOutputProgressWizardPage;
-  CancelConfig: Boolean;  
+  CancelConfig: Boolean;
   DBName, DBProvider, CustomDataSource, CustomPort, CustomBase: String;
   CustomUserId, CustomPassword: String;
   TempoIniciarExecucao, LinkWeb, ClientSettingsProvider: String;
   CustomUserName: String;
   EnableAdvanced: Boolean;
-  BackupFile, ConfigFile: String;
+  BackupFile: String;
 
 function IsAdminInstallMode: Boolean;
 begin
@@ -105,7 +105,7 @@ begin
   LinkWeb := 'www.google.com.br';
   ClientSettingsProvider := '';
 
-  UserPage := CreateInputQueryPage(wpSelectDir, 'Configuração de Usuário', 'Defina o usuário', 'Informe o nome do usuário para a instalação.');
+  UserPage := CreateInputQueryPage(wpSelectDir, 'Configuração de Usuário', 'Defina o usuário', 'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.');
   UserPage.Add('Nome do usuário:', False);
   UserPage.Values[0] := ExpandConstant('{username}');
 
@@ -122,6 +122,7 @@ begin
   ConnectionPage.Add('Data Source:', False);
   ConnectionPage.Add('Porta:', False);
   ConnectionPage.Add('Base:', False);
+
   ConnectionPage.Values[0] := DBName;
   ConnectionPage.Values[1] := DBProvider;
   ConnectionPage.Values[2] := CustomDataSource;
@@ -155,87 +156,88 @@ begin
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  i: Integer;
 begin
   Result := True;
 
-  case CurPageID of
-    { Validação por página }
-    UserPage.ID:
-      begin
-        if Trim(UserPage.Values[0]) = '' then
-        begin
-          MsgBox('É necessário informar um nome de usuário!', mbError, MB_OK);
-          Result := False;
-        end
-        else
-        begin
-          CustomUserName := UserPage.Values[0];
-          EnableAdvanced := EnableAdvancedCheckBox.Checked;
-        end;
-      end;
+  // Validação na página de usuário
+  if CurPageID = UserPage.ID then
+  begin
+    if Trim(UserPage.Values[0]) = '' then
+    begin
+      MsgBox('É necessário informar um nome de usuário!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+    CustomUserName := UserPage.Values[0];
+    EnableAdvanced := EnableAdvancedCheckBox.Checked;
+  end;
 
-    ConnectionPage.ID:
-      if EnableAdvanced then
+  // Validação na página de conexão
+  if (CurPageID = ConnectionPage.ID) and EnableAdvanced then
+  begin
+    for i := 0 to 4 do
+    begin
+      if Trim(ConnectionPage.Values[i]) = '' then
       begin
-        if (Trim(ConnectionPage.Values[0]) = '') or
-           (Trim(ConnectionPage.Values[1]) = '') or
-           (Trim(ConnectionPage.Values[2]) = '') or
-           (Trim(ConnectionPage.Values[3]) = '') or
-           (Trim(ConnectionPage.Values[4]) = '') then
-        begin
-          MsgBox('Todos os campos de conexão são obrigatórios!', mbError, MB_OK);
-          Result := False;
-        end
-        else if StrToIntDef(ConnectionPage.Values[3], -1) < 0 then
-        begin
-          MsgBox('A porta deve ser um número válido!', mbError, MB_OK);
-          Result := False;
-        end;
+        MsgBox('Todos os campos de conexão são obrigatórios!', mbError, MB_OK);
+        Result := False;
+        Exit;
       end;
+    end;
+    if StrToIntDef(ConnectionPage.Values[3], -1) < 0 then
+    begin
+      MsgBox('A porta deve ser um número válido!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+  end;
 
-    CredentialsPage.ID:
-      if EnableAdvanced then
-      begin
-        if Trim(CredentialsPage.Values[0]) = '' then
-        begin
-          MsgBox('Usuário do banco de dados não pode estar vazio!', mbError, MB_OK);
-          Result := False;
-        end
-        else if Trim(CredentialsPage.Values[1]) = '' then
-        begin
-          MsgBox('Senha do banco de dados não pode estar vazia!', mbError, MB_OK);
-          Result := False;
-        end;
-      end;
+  // Validação na página de credenciais
+  if (CurPageID = CredentialsPage.ID) and EnableAdvanced then
+  begin
+    if Trim(CredentialsPage.Values[0]) = '' then
+    begin
+      MsgBox('Usuário do banco de dados não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+    if Trim(CredentialsPage.Values[1]) = '' then
+    begin
+      MsgBox('Senha do banco de dados não pode estar vazia!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+  end;
 
-    AppConfigPage.ID:
-      if EnableAdvanced then
-      begin
-        if Trim(AppConfigPage.Values[0]) = '' then
-        begin
-          MsgBox('Tempo para iniciar não pode estar vazio!', mbError, MB_OK);
-          Result := False;
-        end
-        else if Trim(AppConfigPage.Values[1]) = '' then
-        begin
-          MsgBox('Link Web não pode estar vazio!', mbError, MB_OK);
-          Result := False;
-        end
-        else
-        begin
-          { Salva valores finais }
-          DBName := ConnectionPage.Values[0];
-          DBProvider := ConnectionPage.Values[1];
-          CustomDataSource := ConnectionPage.Values[2];
-          CustomPort := ConnectionPage.Values[3];
-          CustomBase := ConnectionPage.Values[4];
-          CustomUserId := CredentialsPage.Values[0];
-          CustomPassword := CredentialsPage.Values[1];
-          TempoIniciarExecucao := AppConfigPage.Values[0];
-          LinkWeb := AppConfigPage.Values[1];
-          ClientSettingsProvider := AppConfigPage.Values[2]; // pode estar vazio
-        end;
-      end;
+  // Validação na página de configuração do aplicativo
+  if (CurPageID = AppConfigPage.ID) and EnableAdvanced then
+  begin
+    if Trim(AppConfigPage.Values[0]) = '' then
+    begin
+      MsgBox('Tempo para iniciar não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+    if Trim(AppConfigPage.Values[1]) = '' then
+    begin
+      MsgBox('Link Web não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    // Atualiza variáveis
+    DBName := ConnectionPage.Values[0];
+    DBProvider := ConnectionPage.Values[1];
+    CustomDataSource := ConnectionPage.Values[2];
+    CustomPort := ConnectionPage.Values[3];
+    CustomBase := ConnectionPage.Values[4];
+    CustomUserId := CredentialsPage.Values[0];
+    CustomPassword := CredentialsPage.Values[1];
+    TempoIniciarExecucao := AppConfigPage.Values[0];
+    LinkWeb := AppConfigPage.Values[1];
+    ClientSettingsProvider := AppConfigPage.Values[2];
   end;
 end;
 
@@ -250,7 +252,7 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  ConfigText: String;
+  ConfigFile, ConfigText: String;
   ConfigContent: TStringList;
   I: Integer;
 begin
@@ -274,37 +276,32 @@ begin
       begin
         if CancelConfig then
         begin
-          { Rollback }
+          MsgBox('Configuração cancelada. Restaurando arquivo original...', mbError, MB_OK);
           if FileExists(BackupFile) then
             FileCopy(BackupFile, ConfigFile, True);
-
-          MsgBox('Configuração cancelada e arquivo restaurado.', mbError, MB_OK);
+          ConfigContent.Free;
           ConfigPage.Hide;
           Exit;
         end;
 
+        WizardForm.ProcessMessages; // Substitui Sleep
         ConfigPage.SetProgress(I, 100);
         ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', '');
-        Sleep(5); // apenas para mostrar progresso sem travar
 
-        case I of
-          10: StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=',
-              '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True);
-          30: StringChangeEx(ConfigText, '<add name="GoAheadBD"',
-              '<add name="' + DBName + '" providerName="' + DBProvider +
-              '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort + '/' +
-              CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';" />', True);
-          50: StringChangeEx(ConfigText, '<add key="Usuario" value=',
-              '<add key="Usuario" value="' + CustomUserName + '" />', True);
-          70:
-            begin
-              StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=',
-                '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True);
-              StringChangeEx(ConfigText, '<add key="LinkWeb" value=',
-                '<add key="LinkWeb" value="' + LinkWeb + '" />', True);
-              StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value=',
-                '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True);
-            end;
+        if I = 10 then
+          StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True);
+
+        if I = 30 then
+          StringChangeEx(ConfigText, '<add name="GoAheadBD"', '<add name="' + DBName + '" providerName="' + DBProvider +'" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';" />', True);
+
+        if I = 50 then
+          StringChangeEx(ConfigText, '<add key="Usuario" value=', '<add key="Usuario" value="' + CustomUserName + '" />', True);
+
+        if I = 70 then
+        begin
+          StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=', '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True);
+          StringChangeEx(ConfigText, '<add key="LinkWeb" value=', '<add key="LinkWeb" value="' + LinkWeb + '" />', True);
+          StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value=', '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True);
         end;
       end;
 
