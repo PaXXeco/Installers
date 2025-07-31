@@ -311,39 +311,19 @@ begin
   end;
 end;
 
-function IsAppRunning: Boolean;
-begin
-  // Verifica se a janela do aplicativo está aberta
-  Result := FindWindowByWindowName('NotificadorAhead') <> 0;
-end;
-
 procedure InitializeUninstallProgressForm();
 var
   KeepBackup: Integer;
   BackupFilePath: String;
-  ResultCode: Integer;
 begin
-  // Fecha automaticamente o aplicativo se ele estiver rodando
-  while IsAppRunning do
-  begin
-    if MsgBox('O Notificador Ahead está em execução e precisa ser fechado antes da desinstalação.'#13#10 +
-              'Deseja que o instalador feche o aplicativo automaticamente?', mbConfirmation, MB_YESNO) = IDYES then
-    begin
-      Exec('taskkill', '/IM NotificadorAhead.exe /F', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-    end
-    else
-    begin
-      MsgBox('Feche o aplicativo manualmente e clique em OK para continuar.', mbInformation, MB_OK);
-    end;
-  end;
-
-  // Mantém a lógica do backup já existente
   BackupFilePath := ExpandConstant('{app}\NotificadorAhead.exe.config.bak');
+
   if FileExists(BackupFilePath) then
   begin
-    KeepBackup := MsgBox('Um arquivo de backup (.bak) foi encontrado.'#13#10 +
-                         'Deseja manter este arquivo após a desinstalação?', mbConfirmation, MB_YESNO);
+    KeepBackup := MsgBox('Um arquivo de backup (.bak) foi encontrado.'#13#10 + 'Deseja manter este arquivo após a desinstalação?', mbConfirmation, MB_YESNO);
     if KeepBackup = IDNO then
+    begin
       DeleteFile(BackupFilePath);
+    end;
   end;
 end;
