@@ -313,14 +313,17 @@ end;
 
 function IsAppRunning: Boolean;
 begin
-  Result := (FindWindowByClassName('NotificadorAhead') <> 0) or (Exec('tasklist', '/FI "IMAGENAME eq NotificadorAhead.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0));
+  // Verifica se a janela do aplicativo está aberta
+  Result := FindWindowByWindowName('NotificadorAhead') <> 0;
 end;
 
 procedure InitializeUninstallProgressForm();
 var
   KeepBackup: Integer;
   BackupFilePath: String;
+  ResultCode: Integer;
 begin
+  // Fecha automaticamente o aplicativo se ele estiver rodando
   while IsAppRunning do
   begin
     if MsgBox('O Notificador Ahead está em execução e precisa ser fechado antes da desinstalação.'#13#10 +
@@ -334,10 +337,12 @@ begin
     end;
   end;
 
+  // Mantém a lógica do backup já existente
   BackupFilePath := ExpandConstant('{app}\NotificadorAhead.exe.config.bak');
   if FileExists(BackupFilePath) then
   begin
-    KeepBackup := MsgBox('Um arquivo de backup (.bak) foi encontrado.'#13#10 + 'Deseja manter este arquivo após a desinstalação?', mbConfirmation, MB_YESNO);
+    KeepBackup := MsgBox('Um arquivo de backup (.bak) foi encontrado.'#13#10 +
+                         'Deseja manter este arquivo após a desinstalação?', mbConfirmation, MB_YESNO);
     if KeepBackup = IDNO then
       DeleteFile(BackupFilePath);
   end;
