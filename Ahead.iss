@@ -105,19 +105,19 @@ begin
   LinkWeb := 'www.google.com.br';
   ClientSettingsProvider := '';
 
-  UserPage := CreateInputQueryPage(wpSelectDir, 'ConfiguraÃ§Ã£o de UsuÃ¡rio', 'Defina o usuÃ¡rio', 'Informe o nome do usuÃ¡rio para a instalaÃ§Ã£o. TambÃ©m Ã© possÃ­vel habilitar configuraÃ§Ãµes avanÃ§adas.');
-  UserPage.Add('Nome do usuÃ¡rio:', False);
+  UserPage := CreateInputQueryPage(wpSelectDir, 'Configuração de Usuário', 'Defina o usuário', 'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.');
+  UserPage.Add('Nome do usuário:', False);
   UserPage.Values[0] := ExpandConstant('{username}');
 
   EnableAdvancedCheckBox := TNewCheckBox.Create(WizardForm);
   EnableAdvancedCheckBox.Parent := UserPage.Surface;
-  EnableAdvancedCheckBox.Caption := 'AvanÃ§ado';
+  EnableAdvancedCheckBox.Caption := 'Avançado';
   EnableAdvancedCheckBox.Top := UserPage.Edits[0].Top + 30;
   EnableAdvancedCheckBox.Left := UserPage.Edits[0].Left;
   EnableAdvancedCheckBox.Checked := False;
 
-  ConnectionPage := CreateInputQueryPage(UserPage.ID, 'ConfiguraÃ§Ãµes de ConexÃ£o', 'ConexÃ£o com o banco de dados', 'Altere os parÃ¢metros de conexÃ£o se necessÃ¡rio.');
-  ConnectionPage.Add('Nome da conexÃ£o (DBName):', False);
+  ConnectionPage := CreateInputQueryPage(UserPage.ID, 'Configurações de Conexão', 'Conexão com o banco de dados', 'Altere os parâmetros de conexão se necessário.');
+  ConnectionPage.Add('Nome da conexão (DBName):', False);
   ConnectionPage.Add('Provider (DBProvider):', False);
   ConnectionPage.Add('Data Source:', False);
   ConnectionPage.Add('Porta:', False);
@@ -129,13 +129,13 @@ begin
   ConnectionPage.Values[3] := CustomPort;
   ConnectionPage.Values[4] := CustomBase;
 
-  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID, 'Credenciais', 'Acesso ao banco de dados', 'Informe o usuÃ¡rio e senha do banco de dados.');
+  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID, 'Credenciais', 'Acesso ao banco de dados', 'Informe o usuário e senha do banco de dados.');
   CredentialsPage.Add('User Id:', False);
   CredentialsPage.Add('Password:', True);
   CredentialsPage.Values[0] := CustomUserId;
   CredentialsPage.Values[1] := CustomPassword;
 
-  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID, 'ConfiguraÃ§Ãµes do Aplicativo', 'ConfiguraÃ§Ãµes adicionais', 'Altere parÃ¢metros do aplicativo, se necessÃ¡rio.');
+  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID, 'Configurações do Aplicativo', 'Configurações adicionais', 'Altere parâmetros do aplicativo, se necessário.');
   AppConfigPage.Add('Tempo para iniciar (hh:mm:ss):', False);
   AppConfigPage.Add('Link Web:', False);
   AppConfigPage.Add('ClientSettingsProvider:', False);
@@ -143,7 +143,7 @@ begin
   AppConfigPage.Values[1] := LinkWeb;
   AppConfigPage.Values[2] := ClientSettingsProvider;
 
-  ConfigPage := CreateOutputProgressPage('Atualizando variÃ¡veis do arquivo de configuraÃ§Ã£o', 'Aguarde enquanto as alteraÃ§Ãµes sÃ£o aplicadas.');
+  ConfigPage := CreateOutputProgressPage('Atualizando variáveis do arquivo de configuração', 'Aguarde enquanto as alterações são aplicadas.');
   CancelConfig := False;
 end;
 
@@ -307,7 +307,7 @@ begin
     end;
 
     ConfigPage.Hide;
-    MsgBox('ConfiguraÃ§Ã£o concluÃ­da!', mbInformation, MB_OK);
+    MsgBox('Configuração concluí­da!', mbInformation, MB_OK);
   end;
 end;
 
