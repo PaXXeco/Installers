@@ -105,19 +105,19 @@ begin
   LinkWeb := 'www.google.com.br';
   ClientSettingsProvider := '';
 
-  UserPage := CreateInputQueryPage(wpSelectDir, 'Configuração de Usuário', 'Defina o usuário', 'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.');
-  UserPage.Add('Nome do usuário:', False);
+  UserPage := CreateInputQueryPage(wpSelectDir, 'ConfiguraÃ§Ã£o de UsuÃ¡rio', 'Defina o usuÃ¡rio', 'Informe o nome do usuÃ¡rio para a instalaÃ§Ã£o. TambÃ©m Ã© possÃ­vel habilitar configuraÃ§Ãµes avanÃ§adas.');
+  UserPage.Add('Nome do usuÃ¡rio:', False);
   UserPage.Values[0] := ExpandConstant('{username}');
 
   EnableAdvancedCheckBox := TNewCheckBox.Create(WizardForm);
   EnableAdvancedCheckBox.Parent := UserPage.Surface;
-  EnableAdvancedCheckBox.Caption := 'Avançado';
+  EnableAdvancedCheckBox.Caption := 'AvanÃ§ado';
   EnableAdvancedCheckBox.Top := UserPage.Edits[0].Top + 30;
   EnableAdvancedCheckBox.Left := UserPage.Edits[0].Left;
   EnableAdvancedCheckBox.Checked := False;
 
-  ConnectionPage := CreateInputQueryPage(UserPage.ID, 'Configurações de Conexão', 'Conexão com o banco de dados', 'Altere os parâmetros de conexão se necessário.');
-  ConnectionPage.Add('Nome da conexão (DBName):', False);
+  ConnectionPage := CreateInputQueryPage(UserPage.ID, 'ConfiguraÃ§Ãµes de ConexÃ£o', 'ConexÃ£o com o banco de dados', 'Altere os parÃ¢metros de conexÃ£o se necessÃ¡rio.');
+  ConnectionPage.Add('Nome da conexÃ£o (DBName):', False);
   ConnectionPage.Add('Provider (DBProvider):', False);
   ConnectionPage.Add('Data Source:', False);
   ConnectionPage.Add('Porta:', False);
@@ -129,13 +129,13 @@ begin
   ConnectionPage.Values[3] := CustomPort;
   ConnectionPage.Values[4] := CustomBase;
 
-  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID, 'Credenciais', 'Acesso ao banco de dados', 'Informe o usuário e senha do banco de dados.');
+  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID, 'Credenciais', 'Acesso ao banco de dados', 'Informe o usuÃ¡rio e senha do banco de dados.');
   CredentialsPage.Add('User Id:', False);
   CredentialsPage.Add('Password:', True);
   CredentialsPage.Values[0] := CustomUserId;
   CredentialsPage.Values[1] := CustomPassword;
 
-  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID, 'Configurações do Aplicativo', 'Configurações adicionais', 'Altere parâmetros do aplicativo, se necessário.');
+  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID, 'ConfiguraÃ§Ãµes do Aplicativo', 'ConfiguraÃ§Ãµes adicionais', 'Altere parÃ¢metros do aplicativo, se necessÃ¡rio.');
   AppConfigPage.Add('Tempo para iniciar (hh:mm:ss):', False);
   AppConfigPage.Add('Link Web:', False);
   AppConfigPage.Add('ClientSettingsProvider:', False);
@@ -143,7 +143,7 @@ begin
   AppConfigPage.Values[1] := LinkWeb;
   AppConfigPage.Values[2] := ClientSettingsProvider;
 
-  ConfigPage := CreateOutputProgressPage('Atualizando variáveis do arquivo de configuração', 'Aguarde enquanto as alterações são aplicadas.');
+  ConfigPage := CreateOutputProgressPage('Atualizando variÃ¡veis do arquivo de configuraÃ§Ã£o', 'Aguarde enquanto as alteraÃ§Ãµes sÃ£o aplicadas.');
   CancelConfig := False;
 end;
 
@@ -161,12 +161,12 @@ var
 begin
   Result := True;
 
-  // Validação na página de usuário
+  // ValidaÃ§Ã£o na pÃ¡gina de usuÃ¡rio
   if CurPageID = UserPage.ID then
   begin
     if Trim(UserPage.Values[0]) = '' then
     begin
-      MsgBox('É necessário informar um nome de usuário!', mbError, MB_OK);
+      MsgBox('Ã‰ necessÃ¡rio informar um nome de usuÃ¡rio!', mbError, MB_OK);
       Result := False;
       Exit;
     end;
@@ -174,60 +174,60 @@ begin
     EnableAdvanced := EnableAdvancedCheckBox.Checked;
   end;
 
-  // Validação na página de conexão
+  // ValidaÃ§Ã£o na pÃ¡gina de conexÃ£o
   if (CurPageID = ConnectionPage.ID) and EnableAdvanced then
   begin
     for i := 0 to 4 do
     begin
       if Trim(ConnectionPage.Values[i]) = '' then
       begin
-        MsgBox('Todos os campos de conexão são obrigatórios!', mbError, MB_OK);
+        MsgBox('Todos os campos de conexÃ£o sÃ£o obrigatÃ³rios!', mbError, MB_OK);
         Result := False;
         Exit;
       end;
     end;
     if StrToIntDef(ConnectionPage.Values[3], -1) < 0 then
     begin
-      MsgBox('A porta deve ser um número válido!', mbError, MB_OK);
+      MsgBox('A porta deve ser um nÃºmero vÃ¡lido!', mbError, MB_OK);
       Result := False;
       Exit;
     end;
   end;
 
-  // Validação na página de credenciais
+  // ValidaÃ§Ã£o na pÃ¡gina de credenciais
   if (CurPageID = CredentialsPage.ID) and EnableAdvanced then
   begin
     if Trim(CredentialsPage.Values[0]) = '' then
     begin
-      MsgBox('Usuário do banco de dados não pode estar vazio!', mbError, MB_OK);
+      MsgBox('UsuÃ¡rio do banco de dados nÃ£o pode estar vazio!', mbError, MB_OK);
       Result := False;
       Exit;
     end;
     if Trim(CredentialsPage.Values[1]) = '' then
     begin
-      MsgBox('Senha do banco de dados não pode estar vazia!', mbError, MB_OK);
+      MsgBox('Senha do banco de dados nÃ£o pode estar vazia!', mbError, MB_OK);
       Result := False;
       Exit;
     end;
   end;
 
-  // Validação na página de configuração do aplicativo
+  // ValidaÃ§Ã£o na pÃ¡gina de configuraÃ§Ã£o do aplicativo
   if (CurPageID = AppConfigPage.ID) and EnableAdvanced then
   begin
     if Trim(AppConfigPage.Values[0]) = '' then
     begin
-      MsgBox('Tempo para iniciar não pode estar vazio!', mbError, MB_OK);
+      MsgBox('Tempo para iniciar nÃ£o pode estar vazio!', mbError, MB_OK);
       Result := False;
       Exit;
     end;
     if Trim(AppConfigPage.Values[1]) = '' then
     begin
-      MsgBox('Link Web não pode estar vazio!', mbError, MB_OK);
+      MsgBox('Link Web nÃ£o pode estar vazio!', mbError, MB_OK);
       Result := False;
       Exit;
     end;
 
-    // Atualiza variáveis
+    // Atualiza variÃ¡veis
     DBName := ConnectionPage.Values[0];
     DBProvider := ConnectionPage.Values[1];
     CustomDataSource := ConnectionPage.Values[2];
@@ -276,17 +276,17 @@ begin
       begin
         if CancelConfig then
         begin
-          MsgBox('Configuração cancelada. Restaurando arquivo original...', mbError, MB_OK);
+          MsgBox('ConfiguraÃ§Ã£o cancelada. Restaurando arquivo original...', mbError, MB_OK);
           if FileExists(BackupFile) then
             FileCopy(BackupFile, ConfigFile, True);
           ConfigContent.Free;
           ConfigPage.Hide;
           Exit;
         end;
-
-        WizardForm.ProcessMessages; // Substitui Sleep
+        
+        Sleep(5)
         ConfigPage.SetProgress(I, 100);
-        ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', '');
+        ConfigPage.SetText('Aplicando alteraÃ§Ãµes... ' + IntToStr(I) + '%', '');
 
         if I = 10 then
           StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True);
@@ -312,6 +312,6 @@ begin
     end;
 
     ConfigPage.Hide;
-    MsgBox('Configuração concluída!', mbInformation, MB_OK);
+    MsgBox('ConfiguraÃ§Ã£o concluÃ­da!', mbInformation, MB_OK);
   end;
 end;
