@@ -154,7 +154,10 @@ begin
     Result := False;
 end;
 
+// Validação dos dados
 function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  i: Integer;
 begin
   Result := True;
 
@@ -172,8 +175,55 @@ begin
     end;
   end;
 
-  if CurPageID = AppConfigPage.ID then
+  if (CurPageID = AppConfigPage.ID) and EnableAdvanced then
   begin
+    // Validação dos campos avançados
+    for i := 0 to 4 do
+    begin
+      if Trim(ConnectionPage.Values[i]) = '' then
+      begin
+        MsgBox('Todos os campos de conexão são obrigatórios!', mbError, MB_OK);
+        Result := False;
+        Exit;
+      end;
+    end;
+
+    if Trim(CredentialsPage.Values[0]) = '' then
+    begin
+      MsgBox('Usuário do banco de dados não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if Trim(CredentialsPage.Values[1]) = '' then
+    begin
+      MsgBox('Senha do banco de dados não pode estar vazia!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if Trim(AppConfigPage.Values[0]) = '' then
+    begin
+      MsgBox('Tempo para iniciar não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if Trim(AppConfigPage.Values[1]) = '' then
+    begin
+      MsgBox('Link Web não pode estar vazio!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    if not TryStrToInt(ConnectionPage.Values[3], i) then
+    begin
+      MsgBox('A porta deve ser um número válido!', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    // Só sobrescreve se avançado estiver marcado
     DBName := ConnectionPage.Values[0];
     DBProvider := ConnectionPage.Values[1];
     CustomDataSource := ConnectionPage.Values[2];
