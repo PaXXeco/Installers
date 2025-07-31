@@ -252,7 +252,6 @@ begin
       begin 
         MsgBox('Configuração cancelada.', mbError, MB_OK); 
         ConfigContent.Free; 
-        FileCopy(BackupFile, ConfigFile, True);
         ConfigPage.Hide; 
         Exit; 
       end; 
