@@ -161,12 +161,11 @@ var
 begin
   Result := True;
 
-  // ValidaÃ§Ã£o na pÃ¡gina de usuÃ¡rio
   if CurPageID = UserPage.ID then
   begin
     if Trim(UserPage.Values[0]) = '' then
     begin
-      MsgBox('Ã‰ necessÃ¡rio informar um nome de usuÃ¡rio!', mbError, MB_OK);
+      MsgBox('É obrigatório informar um nome de usuário.', mbError, MB_OK);
       Result := False;
       Exit;
     end;
@@ -174,60 +173,56 @@ begin
     EnableAdvanced := EnableAdvancedCheckBox.Checked;
   end;
 
-  // ValidaÃ§Ã£o na pÃ¡gina de conexÃ£o
   if (CurPageID = ConnectionPage.ID) and EnableAdvanced then
   begin
     for i := 0 to 4 do
     begin
       if Trim(ConnectionPage.Values[i]) = '' then
       begin
-        MsgBox('Todos os campos de conexÃ£o sÃ£o obrigatÃ³rios!', mbError, MB_OK);
+        MsgBox('Todos os campos de conexão são obrigatórios.', mbError, MB_OK);
         Result := False;
         Exit;
       end;
     end;
     if StrToIntDef(ConnectionPage.Values[3], -1) < 0 then
     begin
-      MsgBox('A porta deve ser um nÃºmero vÃ¡lido!', mbError, MB_OK);
+      MsgBox('A porta deve ser um número válido.', mbError, MB_OK);
       Result := False;
       Exit;
     end;
   end;
 
-  // ValidaÃ§Ã£o na pÃ¡gina de credenciais
   if (CurPageID = CredentialsPage.ID) and EnableAdvanced then
   begin
     if Trim(CredentialsPage.Values[0]) = '' then
     begin
-      MsgBox('UsuÃ¡rio do banco de dados nÃ£o pode estar vazio!', mbError, MB_OK);
+      MsgBox('Usuário do banco de dados não pode estar vazio.', mbError, MB_OK);
       Result := False;
       Exit;
     end;
     if Trim(CredentialsPage.Values[1]) = '' then
     begin
-      MsgBox('Senha do banco de dados nÃ£o pode estar vazia!', mbError, MB_OK);
+      MsgBox('Senha do banco de dados não pode estar vazia!', mbError, MB_OK);
       Result := False;
       Exit;
     end;
   end;
 
-  // ValidaÃ§Ã£o na pÃ¡gina de configuraÃ§Ã£o do aplicativo
   if (CurPageID = AppConfigPage.ID) and EnableAdvanced then
   begin
     if Trim(AppConfigPage.Values[0]) = '' then
     begin
-      MsgBox('Tempo para iniciar nÃ£o pode estar vazio!', mbError, MB_OK);
+      MsgBox('Tempo para iniciar não pode estar vazio!', mbError, MB_OK);
       Result := False;
       Exit;
     end;
     if Trim(AppConfigPage.Values[1]) = '' then
     begin
-      MsgBox('Link Web nÃ£o pode estar vazio!', mbError, MB_OK);
+      MsgBox('Link Web não pode estar vazio!', mbError, MB_OK);
       Result := False;
       Exit;
     end;
 
-    // Atualiza variÃ¡veis
     DBName := ConnectionPage.Values[0];
     DBProvider := ConnectionPage.Values[1];
     CustomDataSource := ConnectionPage.Values[2];
@@ -276,7 +271,7 @@ begin
       begin
         if CancelConfig then
         begin
-          MsgBox('ConfiguraÃ§Ã£o cancelada. Restaurando arquivo original...', mbError, MB_OK);
+          MsgBox('Configuração cancelada. Restaurando arquivo original...', mbError, MB_OK);
           if FileExists(BackupFile) then
             FileCopy(BackupFile, ConfigFile, True);
           ConfigContent.Free;
@@ -286,7 +281,7 @@ begin
         
         Sleep(5)
         ConfigPage.SetProgress(I, 100);
-        ConfigPage.SetText('Aplicando alteraÃ§Ãµes... ' + IntToStr(I) + '%', '');
+        ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', '');
 
         if I = 10 then
           StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True);
@@ -313,5 +308,22 @@ begin
 
     ConfigPage.Hide;
     MsgBox('ConfiguraÃ§Ã£o concluÃ­da!', mbInformation, MB_OK);
+  end;
+end;
+
+procedure InitializeUninstallProgressForm();
+var
+  KeepBackup: Integer;
+  BackupFilePath: String;
+begin
+  BackupFilePath := ExpandConstant('{app}\NotificadorAhead.exe.config.bak');
+
+  if FileExists(BackupFilePath) then
+  begin
+    KeepBackup := MsgBox('Um arquivo de backup (.bak) foi encontrado.'#13#10 + 'Deseja manter este arquivo após a desinstalação?', mbConfirmation, MB_YESNO);
+    if KeepBackup = IDNO then
+    begin
+      DeleteFile(BackupFilePath);
+    end;
   end;
 end;
