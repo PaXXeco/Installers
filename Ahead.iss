@@ -1,97 +1,97 @@
-; By PHMP 
-#define MyAppName "Notificador Ahead - Installer" 
-#define MyAppVersion "1.0.0" 
-#define MyAppPublisher "Notificador Ahead Installer By PHMP" 
-#define MyAppURL "https://github.com/PaXXeco" 
-#define MyAppExeName "NotificadorAhead.exe" 
-#define WorkFolderTemp "C:\Temp\Workfolder\Ahead\notificador" 
+#define MyAppName "Notificador Ahead - Installer"
+#define MyAppVersion "1.0.0"
+#define MyAppPublisher "Notificador Ahead Installer By PHMP"
+#define MyAppURL "https://github.com/PaXXeco"
+#define MyAppExeName "NotificadorAhead.exe"
+#define WorkFolderTemp "C:\Temp\Workfolder\Ahead\notificador"
 
-[Setup] 
-AppId={{10DD487A-9245-4A69-8B8B-726D59D14CBF}} 
-AppName={#MyAppName} 
-AppVersion={#MyAppVersion} 
-AppPublisher={#MyAppPublisher} 
-AppPublisherURL={#MyAppURL} 
-AppSupportURL={#MyAppURL} 
-AppUpdatesURL={#MyAppURL} 
-ArchitecturesInstallIn64BitMode=x64compatible 
-DefaultDirName={code:GetInstallDir} 
-DefaultGroupName={#MyAppName} 
-UninstallDisplayIcon={app}\{#MyAppExeName} 
-OutputBaseFilename=InstallerByPHMP 
-SetupIconFile={#WorkFolderTemp}\ahead.ico 
-SolidCompression=yes 
-ChangesAssociations=yes 
-WizardStyle=modern 
-PrivilegesRequired=lowest 
-PrivilegesRequiredOverridesAllowed=dialog 
-AllowNoIcons=yes 
+[Setup]
+AppId={{10DD487A-9245-4A69-8B8B-726D59D14CBF}}
+AppName={#MyAppName}
+AppVersion={#MyAppVersion}
+AppPublisher={#MyAppPublisher}
+AppPublisherURL={#MyAppURL}
+AppSupportURL={#MyAppURL}
+AppUpdatesURL={#MyAppURL}
+ArchitecturesInstallIn64BitMode=x64compatible
+DefaultDirName={code:GetInstallDir}
+DefaultGroupName={#MyAppName}
+UninstallDisplayIcon={app}\{#MyAppExeName}
+OutputBaseFilename=InstallerByPHMP
+SetupIconFile={#WorkFolderTemp}\ahead.ico
+SolidCompression=yes
+ChangesAssociations=yes
+WizardStyle=modern
+PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=dialog
+AllowNoIcons=yes
 
-[Languages] 
-Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl" 
+[Languages]
+Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
 
-[Files] 
-Source: "{#WorkFolderTemp}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion 
+[Files]
+Source: "{#WorkFolderTemp}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#WorkFolderTemp}\Comum.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#WorkFolderTemp}\Erro.dll"; DestDir: "{app}"; Flags: ignoreversion 
-Source: "{#WorkFolderTemp}\Modelo.dll"; DestDir: "{app}"; Flags: ignoreversion 
-Source: "{#WorkFolderTemp}\Negocio.dll"; DestDir: "{app}"; Flags: ignoreversion 
-Source: "{#WorkFolderTemp}\NotificadorAhead.exe.config"; DestDir: "{app}"; Flags: ignoreversion 
-Source: "{#WorkFolderTemp}\Oracle.ManagedDataAccess.dll"; DestDir: "{app}"; Flags: ignoreversion 
-Source: "{#WorkFolderTemp}\Persistencia.BD.dll"; DestDir: "{app}"; Flags: ignoreversion 
-Source: "{#WorkFolderTemp}\Persistencia.dll"; DestDir: "{app}"; Flags: ignoreversion 
-Source: "{#WorkFolderTemp}\Persistencia.Sessao.dll"; DestDir: "{app}"; Flags: ignoreversion 
+Source: "{#WorkFolderTemp}\Erro.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WorkFolderTemp}\Modelo.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WorkFolderTemp}\Negocio.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WorkFolderTemp}\NotificadorAhead.exe.config"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WorkFolderTemp}\Oracle.ManagedDataAccess.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WorkFolderTemp}\Persistencia.BD.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WorkFolderTemp}\Persistencia.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#WorkFolderTemp}\Persistencia.Sessao.dll"; DestDir: "{app}"; Flags: ignoreversion
 
-[Dirs] 
-Name: "{app}\logs" 
- 
-[Registry] 
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "AheadNotificador"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Check: not IsAdminInstallMode 
-Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "AheadNotificador"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Check: IsAdminInstallMode 
- 
-[Icons] 
-Name: "{code:GetProgramsFolder}\Notificador Ahead"; Filename: "{app}\{#MyAppExeName}" 
-Name: "{userdesktop}\Notificador Ahead"; Filename: "{app}\{#MyAppExeName}" 
-  
-[Run] 
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent 
-  
-[Code] 
-var 
-  UserPage: TInputQueryWizardPage; 
-  EnableAdvancedCheckBox: TNewCheckBox; 
-  ConnectionPage: TInputQueryWizardPage; 
-  CredentialsPage: TInputQueryWizardPage; 
-  AppConfigPage: TInputQueryWizardPage; 
-  ConfigPage: TOutputProgressWizardPage; 
-  CancelConfig: Boolean;  
-  DBName, DBProvider, CustomDataSource, CustomPort, CustomBase: String; 
-  CustomUserId, CustomPassword: String; 
-  TempoIniciarExecucao, LinkWeb, ClientSettingsProvider: String; 
-  CustomUserName: String; 
-  EnableAdvanced: Boolean; 
+[Dirs]
+Name: "{app}\logs"
 
-function IsAdminInstallMode: Boolean; 
-begin 
-  Result := IsAdmin; 
-end; 
-  
-function GetInstallDir(Default: String): String; 
-begin 
-  if IsAdminInstallMode then 
-    Result := ExpandConstant('{autopf}\Ahead\Notificador') 
-  else 
-    Result := ExpandConstant('{localappdata}\Ahead\Notificador'); 
-end; 
-  
-function GetProgramsFolder(Default: String): String; 
-begin 
-  if IsAdminInstallMode then 
-    Result := ExpandConstant('{autoprograms}') 
-  else 
-    Result := ExpandConstant('{userprograms}'); 
-end; 
-  
+[Registry]
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "AheadNotificador"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Check: not IsAdminInstallMode
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "AheadNotificador"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Check: IsAdminInstallMode
+
+[Icons]
+Name: "{code:GetProgramsFolder}\Notificador Ahead"; Filename: "{app}\{#MyAppExeName}"
+Name: "{userdesktop}\Notificador Ahead"; Filename: "{app}\{#MyAppExeName}"
+
+[Run]
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+var
+  UserPage: TInputQueryWizardPage;
+  EnableAdvancedCheckBox: TNewCheckBox;
+  ConnectionPage: TInputQueryWizardPage;
+  CredentialsPage: TInputQueryWizardPage;
+  AppConfigPage: TInputQueryWizardPage;
+  ConfigPage: TOutputProgressWizardPage;
+  CancelConfig: Boolean;
+
+  DBName, DBProvider, CustomDataSource, CustomPort, CustomBase: String;
+  CustomUserId, CustomPassword: String;
+  TempoIniciarExecucao, LinkWeb, ClientSettingsProvider: String;
+  CustomUserName: String;
+  EnableAdvanced: Boolean;
+
+function IsAdminInstallMode: Boolean;
+begin
+  Result := IsAdmin;
+end;
+
+function GetInstallDir(Default: String): String;
+begin
+  if IsAdminInstallMode then
+    Result := ExpandConstant('{autopf}\Ahead\Notificador')
+  else
+    Result := ExpandConstant('{localappdata}\Ahead\Notificador');
+end;
+
+function GetProgramsFolder(Default: String): String;
+begin
+  if IsAdminInstallMode then
+    Result := ExpandConstant('{autoprograms}')
+  else
+    Result := ExpandConstant('{userprograms}');
+end;
+
 procedure InitializeWizard;
 begin
   DBName := 'GoAheadBD';
@@ -104,49 +104,61 @@ begin
   TempoIniciarExecucao := '00:01:00';
   LinkWeb := 'www.google.com.br';
   ClientSettingsProvider := '';
-   
-  UserPage := CreateInputQueryPage(wpSelectDir, 'Configuração de Usuário', 'Defina o usuário', 'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.');
+
+  UserPage := CreateInputQueryPage(wpSelectDir,
+    'Configuração de Usuário',
+    'Defina o usuário',
+    'Informe o nome do usuário para a instalação. Também é possível habilitar configurações avançadas.');
   UserPage.Add('Nome do usuário:', False);
   UserPage.Values[0] := ExpandConstant('{username}');
-  
-  EnableAdvancedCheckBox := TNewCheckBox.Create(WizardForm); 
-  EnableAdvancedCheckBox.Parent := UserPage.Surface; 
-  EnableAdvancedCheckBox.Caption := 'Avançado'; 
-  EnableAdvancedCheckBox.Top := UserPage.Edits[0].Top + 30; 
-  EnableAdvancedCheckBox.Left := UserPage.Edits[0].Left; 
-  EnableAdvancedCheckBox.Checked := False; 
-  
-  ConnectionPage := CreateInputQueryPage(UserPage.ID, 'Configurações de Conexão', 'Conexão com o banco de dados', 'Altere os parâmetros de conexão se necessário.'); 
-  ConnectionPage.Add('Nome da conexão (DBName):', False); 
-  ConnectionPage.Add('Provider (DBProvider):', False); 
-  ConnectionPage.Add('Data Source:', False); 
-  ConnectionPage.Add('Porta:', False); 
-  ConnectionPage.Add('Base:', False); 
-  
-  ConnectionPage.Values[0] := DBName;
-  ConnectionPage.Values[1] := DBProvider;
-  ConnectionPage.Values[2] := CustomDataSource;
-  ConnectionPage.Values[3] := CustomPort;
-  ConnectionPage.Values[4] := CustomBase;
-  
-  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID, 'Credenciais', 'Acesso ao banco de dados', 'Informe o usuário e senha do banco de dados.'); 
-  CredentialsPage.Add('User Id:', False); 
-  CredentialsPage.Add('Password:', True); 
-  CredentialsPage.Values[0] := CustomUserId;
-  CredentialsPage.Values[1] := CustomPassword;
-  
-  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID, 'Configurações do Aplicativo', 'Configurações adicionais', 'Altere parâmetros do aplicativo, se necessário.');
-  AppConfigPage.Add('Tempo para iniciar (hh:mm:ss):', False); 
-  AppConfigPage.Add('Link Web:', False); 
-  AppConfigPage.Add('ClientSettingsProvider:', False); 
-  AppConfigPage.Values[0] := TempoIniciarExecucao;
-  AppConfigPage.Values[1] := LinkWeb;
-  AppConfigPage.Values[2] := ClientSettingsProvider;
-  
-  ConfigPage := CreateOutputProgressPage('Atualizando variáveis do arquivo de configuração', 'Aguarde enquanto as alterações são aplicadas.'); 
-  CancelConfig := False; 
-end; 
-  
+
+  EnableAdvancedCheckBox := TNewCheckBox.Create(WizardForm);
+  EnableAdvancedCheckBox.Parent := UserPage.Surface;
+  EnableAdvancedCheckBox.Caption := 'Avançado';
+  EnableAdvancedCheckBox.Top := UserPage.Edits[0].Top + 30;
+  EnableAdvancedCheckBox.Left := UserPage.Edits[0].Left;
+  EnableAdvancedCheckBox.Checked := False;
+
+  ConnectionPage := CreateInputQueryPage(UserPage.ID,
+    'Configurações de Conexão',
+    'Conexão com o banco de dados',
+    'Altere os parâmetros de conexão se necessário.');
+  ConnectionPage.Add('Nome da conexão (DBName):', False);
+  ConnectionPage.Add('Provider (DBProvider):', False);
+  ConnectionPage.Add('Data Source:', False);
+  ConnectionPage.Add('Porta:', False);
+  ConnectionPage.Add('Base:', False);
+
+  ConnectionPage.Values[0] := 'GoAheadBD';
+  ConnectionPage.Values[1] := 'Oracle.DataAccess.Client';
+  ConnectionPage.Values[2] := '192.168.0.214';
+  ConnectionPage.Values[3] := '1522';
+  ConnectionPage.Values[4] := 'prod.ou.local';
+
+  CredentialsPage := CreateInputQueryPage(ConnectionPage.ID,
+    'Credenciais',
+    'Acesso ao banco de dados',
+    'Informe o usuário e senha do banco de dados.');
+  CredentialsPage.Add('User Id:', False);
+  CredentialsPage.Add('Password:', True);
+  CredentialsPage.Values[0] := 'AHEAD';
+  CredentialsPage.Values[1] := 'AHEAD';
+
+  AppConfigPage := CreateInputQueryPage(CredentialsPage.ID,
+    'Configurações do Aplicativo',
+    'Configurações adicionais',
+    'Altere parâmetros do aplicativo, se necessário.');
+  AppConfigPage.Add('Tempo para iniciar (hh:mm:ss):', False);
+  AppConfigPage.Add('Link Web:', False);
+  AppConfigPage.Add('ClientSettingsProvider:', False);
+  AppConfigPage.Values[0] := '00:01:00';
+  AppConfigPage.Values[1] := 'www.google.com.br';
+  AppConfigPage.Values[2] := '';
+
+  ConfigPage := CreateOutputProgressPage('Atualizando variáveis do arquivo de configuração', 'Aguarde enquanto as alterações são aplicadas.');
+  CancelConfig := False;
+end;
+
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
   if (PageID = ConnectionPage.ID) or (PageID = CredentialsPage.ID) or (PageID = AppConfigPage.ID) then
@@ -199,70 +211,55 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  ConfigFile, BackupFile, ConfigText: String;
+  ConfigFile, ConfigText: String;
   ConfigContent: TStringList;
   I: Integer;
 begin
   if CurStep = ssPostInstall then
   begin
     ConfigFile := ExpandConstant('{app}\NotificadorAhead.exe.config');
-    BackupFile := ConfigFile + '.bak';
-
-    if FileExists(ConfigFile) then
-    begin
-      FileCopy(ConfigFile, BackupFile, False);
-    end;
 
     ConfigPage.Show;
     ConfigPage.SetProgress(0, 100);
 
     ConfigContent := TStringList.Create;
-    try
-      ConfigContent.LoadFromFile(ConfigFile);
-      ConfigText := ConfigContent.Text;
+    ConfigContent.LoadFromFile(ConfigFile);
+    ConfigText := ConfigContent.Text;
 
-      for I := 1 to 100 do
+    for I := 1 to 100 do
+    begin
+      if CancelConfig then
       begin
-        if CancelConfig then
-        begin
-          MsgBox('Configuração cancelada.', mbError, MB_OK);
-          ConfigContent.Free;
-          ConfigPage.Hide;
-          Exit;
-        end;
-
-        Sleep(20);
-        ConfigPage.SetProgress(I, 100);
-        ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', '');
-
-        if I = 10 then
-        begin
-          StringChangeEx(ConfigText,'<add key="LogDeErroCaminhoDoArquivo" value=','<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />',True);
-        end;
-
-        if I = 30 then
-        begin
-          StringChangeEx(ConfigText,'<add name="GoAheadBD"','<add name="' + DBName + '" providerName="' + DBProvider +'" connectionString="Data Source=' + CustomDataSource + ':' +CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId +';Password=' + CustomPassword + ';" />',True);
-        end;
-
-        if I = 50 then
-        begin
-          StringChangeEx(ConfigText,'<add key="Usuario" value=','<add key="Usuario" value="' + CustomUserName + '" />',True);
-        end;
-
-        if I = 70 then
-        begin
-          StringChangeEx(ConfigText,'<add key="TempoIniciarExecucao" value=','<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />',True);
-          StringChangeEx(ConfigText,'<add key="LinkWeb" value=','<add key="LinkWeb" value="' + LinkWeb + '" />',True);
-          StringChangeEx(ConfigText,'<add key="ClientSettingsProvider.ServiceUri" value=','<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />',True);
-        end;
+        MsgBox('Configuração cancelada.', mbError, MB_OK);
+        ConfigContent.Free;
+        ConfigPage.Hide;
+        Exit;
       end;
 
-      ConfigContent.Text := ConfigText;
-      ConfigContent.SaveToFile(ConfigFile);
-    finally
-      ConfigContent.Free;
+      Sleep(20);
+      ConfigPage.SetProgress(I, 100);
+      ConfigPage.SetText('Aplicando alterações... ' + IntToStr(I) + '%', '');
+
+      if I = 10 then
+        StringChangeEx(ConfigText, '<add key="LogDeErroCaminhoDoArquivo" value=', '<add key="LogDeErroCaminhoDoArquivo" value="' + ExpandConstant('{app}\logs') + '" />', True);
+
+      if I = 30 then
+        StringChangeEx(ConfigText, '<add name="GoAheadBD"', '<add name="' + DBName + '" providerName="' + DBProvider + '" connectionString="Data Source=' + CustomDataSource + ':' + CustomPort + '/' + CustomBase + ';User Id=' + CustomUserId + ';Password=' + CustomPassword + ';" />', True);
+
+      if I = 50 then
+        StringChangeEx(ConfigText, '<add key="Usuario" value=', '<add key="Usuario" value="' + CustomUserName + '" />', True);
+
+      if I = 70 then
+      begin
+        StringChangeEx(ConfigText, '<add key="TempoIniciarExecucao" value=', '<add key="TempoIniciarExecucao" value="' + TempoIniciarExecucao + '" />', True);
+        StringChangeEx(ConfigText, '<add key="LinkWeb" value=', '<add key="LinkWeb" value="' + LinkWeb + '" />', True);
+        StringChangeEx(ConfigText, '<add key="ClientSettingsProvider.ServiceUri" value=', '<add key="ClientSettingsProvider.ServiceUri" value="' + ClientSettingsProvider + '" />', True);
+      end;
     end;
+
+    ConfigContent.Text := ConfigText;
+    ConfigContent.SaveToFile(ConfigFile);
+    ConfigContent.Free;
 
     ConfigPage.Hide;
     MsgBox('Configuração concluída!', mbInformation, MB_OK);
